@@ -45,7 +45,7 @@ end
 
 display(h)
 
-# savefig("Figures/VAF_400HSC_59y_muCompare.png")
+# savefig("figures/VAF_400HSC_59y_muCompare.png")
 
 # ====== λ compare ======
 evolveTime = 59
@@ -87,4 +87,4 @@ for ρ=2.:1.:5.
 end
 display(h)
 
-# savefig("Figures/VAF_400HSC_59y_rhoCompare.png")
+# savefig("figures/VAF_400HSC_59y_rhoCompare.png")

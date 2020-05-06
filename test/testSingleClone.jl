@@ -35,7 +35,7 @@ ylabel!("probability")
 title!("Discrete Freqspace")
 display(h)
 
-# savefig("Figures/singleCloneCompare_400HSC.png")
+# savefig("figures/singleCloneCompare_400HSC.png")
 
 
 

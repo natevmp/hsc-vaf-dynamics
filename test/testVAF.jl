@@ -40,6 +40,6 @@ sampledfs = VAFDyn.sampler(dfs, 80)[1]
 plot!(h, sampledfs.freqs_f[2:end], sampledfs.n_f[2:end], label="sampled", yaxis=:log10)
 display(h)
 
-# savefig("Figures/VAF_400HSC_59y.png")
+# savefig("figures/VAF_400HSC_59y.png")
 
 end

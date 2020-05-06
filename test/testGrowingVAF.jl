@@ -32,5 +32,5 @@ ylabel!("number of variants")
 title!("Discrete Freqspace: t = " * string(evolveTime))
 display(h)
 
-# savefig("Figures/GrowingVAFtest1.png")
+# savefig("figures/GrowingVAFtest1.png")
 

@@ -62,7 +62,7 @@ println("true mutational burden: ",trueMutburden,"\n")
 println("sample mutational burden measured: ",sampMutburden,"\n")
 println("sample mutational burden calculated: ",sampMutburden,"\n")
 display(p1)
-# savefig("Figures/sampledDist")
+# savefig("figures/sampledDist")
 
 # p3 = plot(dfs.freqs_f, dfs.n_f, label="true", linewidth=2)
 # plot!(sampfs.freqs_f, sampfs.n_f, label="sampled", linewidth=2)
