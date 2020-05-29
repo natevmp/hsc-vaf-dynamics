@@ -1,4 +1,4 @@
-include("C:/Users/ahw596/Downloads/hsc-vaf-dynamics-master/hsc-vaf-dynamics-master/src/vafdyn.jl")
+include("vafdyn.jl")
 
 
 using StatsBase
@@ -40,6 +40,8 @@ function ABC(VAF,esize,osize,cnumber,limit,maxsteps)
 
     h = 0
 
+    VAF_normalized = VAF ./ VAF[2]
+
     while h == 0
 
         ## fitness calculation
@@ -54,8 +56,6 @@ function ABC(VAF,esize,osize,cnumber,limit,maxsteps)
             dfs_fit = VAFDyn.DFreqspace(params_fit["N"])
 
             VAFDyn.evolveVAF(dfs_fit, params_fit, tempsteps/n, 1/(100*n))
-
-            VAF_normalized = VAF ./ VAF[2]
 
             fit_normalized = dfs_fit.n_f ./ dfs_fit.n_f[2]
 
@@ -86,8 +86,6 @@ function ABC(VAF,esize,osize,cnumber,limit,maxsteps)
             dfs_fit = VAFDyn.DFreqspace(params_fit["N"])
 
             VAFDyn.evolveVAF(dfs_fit, params_fit, tempsteps/n, 1/(100*n))
-
-            VAF_normalized = VAF ./ VAF[2]
 
             fit_normalized = dfs_fit.n_f ./ dfs_fit.n_f[2]
 

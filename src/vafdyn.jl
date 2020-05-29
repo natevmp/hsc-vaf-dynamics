@@ -3,7 +3,7 @@ module VAFDyn
 export vafMC, vafDiff, sampler, mutBurden
 
 using StaticArrays
-using ProgressMeter
+#using ProgressMeter
 using HypergeometricFunctions
 using Distributions
 using PyCall
