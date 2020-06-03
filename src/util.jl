@@ -1,6 +1,6 @@
 
-function freqToInd(f, df)
-    Int(round(f/df))
+function freqToInd(freq, df)
+    Int(round(freq/df))
 end
 
 

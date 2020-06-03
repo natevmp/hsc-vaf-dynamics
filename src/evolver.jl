@@ -1,3 +1,4 @@
+using FiniteDiff
 
 """Evolve vector for timestep using Euler method"""
 function stepEuler(n_f::AbstractVector, moveRate_f::AbstractVector, dt::AbstractFloat)
@@ -15,29 +16,29 @@ function stepEuler(n_f::AbstractVector, moveRate_f::AbstractVector, dt::Abstract
     return nothing
 end
 
-"""Evolve fixed sized population with Moran dynamics"""
+"""Evolve fixed sized population with Moran dynamics as a continuous-time Markov Chain"""
 function evolveVAF(dfs::DFreqspace, params::Dict, t::Number, dt::Float64; addClones::Bool=true)
     ρ = params["ρ"]
     N = params["N"]
     μ = params["μ"]
-    # Calculate event rate
-    r = ρ * N
+    ϕ = params["ϕ"]
+
     # Calculate frequency dependent move rate
     probMove(f) = f.*(1. .- f)
-    moveRate_f = r * probMove(dfs.freqs_f)
+    moveRate_f = ρ * N * probMove(dfs.freqs_f)
 
     for tt in dt:dt:t
         # Evolve existing clones
         stepEuler(dfs.n_f, moveRate_f, dt)
         # Add new clones
         if addClones
-            dfs.n_f[2] += r*μ*dt
+            dfs.n_f[2] += N*μ*(ρ+ϕ/2)*dt
         end
     end
     return nothing
 end
 
-"""Evolve fixed sized population with Moran dynamics"""
+"""Evolve fixed sized population with Moran dynamics as a diffusion PDE"""
 function evolveVAF(cfs::CFreqspace, params::Dict, t::Real, dt::Float64; addClones::Bool=true)
     ρ = params["ρ"]
     N = params["N"]
@@ -50,7 +51,7 @@ function evolveVAF(cfs::CFreqspace, params::Dict, t::Real, dt::Float64; addClone
     g_f = map(x -> x*(1-x), cfs.freqs_f)
     newCloneInd = freqToInd(1/N, cfs.df)
 
-    for t in dt:dt:t
+    for tt in dt:dt:t
         nSwap_f .= copy(cfs.n_f)
         arg_f .= g_f .* nSwap_f
         # diffuse step euler
@@ -58,7 +59,7 @@ function evolveVAF(cfs::CFreqspace, params::Dict, t::Real, dt::Float64; addClone
                             dt*r*cd2(arg_f[2:end-1], arg_f[3:end], arg_f[1:end-2], cfs.df) / N^2
         # add clones
         if addClones
-            cfs.n_f[1 + newCloneInd] += 2*r*μ*dt * 1/cfs.df
+            cfs.n_f[1 + newCloneInd] += r*μ*dt * 1/cfs.df
         end
     end
     return nothing

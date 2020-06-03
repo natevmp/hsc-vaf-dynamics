@@ -117,6 +117,7 @@ function RunBDShort(steps,n,mu,bsize)
 	# number is based on experience, but it throws an error if the simulation
 	# hits the limit just once, so it can't bias the result
 	# it might be better to use variable length, not quite sure though
+	# ==> Nate: there's a package called ElasticArrays which implements variable length multidimensional arrays.
 	max_genes = 15*mu*n
 	genes = zeros(Int8,max_genes,n)
 	k = 0
