@@ -28,3 +28,9 @@ VAFdynamics.code-workspace
 
 # notebook checkpoints
 *.ipynb_checkpoints/*
+*-checkpoint.ipynb
+*-checkpoint.*
+notebooks/.ipynb_checkpoints/VAFdyn-checkpoint.ipynb
+
+# testing stuff
+*_testingStuff.jl
