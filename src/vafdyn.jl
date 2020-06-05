@@ -28,7 +28,7 @@ struct CFreqspace
     function CFreqspace(l::Integer)
         freqs_f = Array(range(0,1,length=l))
         n_f = zeros(Float64, l)
-        df = 1/(l-1)
+        df = 1.0/(l-1)
         new(l, df, freqs_f, n_f)
     end
 end

@@ -1,4 +1,4 @@
-using FiniteDiff
+using DiffEqOperators, OrdinaryDiffEq, SparseArrays
 
 """Evolve vector for timestep using Euler method"""
 function stepEuler!(n_f::AbstractVector, nC_f::AbstractVector, moveRate_f::AbstractVector, dt::Real)
@@ -42,7 +42,9 @@ function evolveVAF(dfs::DFreqspace, params::Dict, t::Number, dt::Float64; addClo
 end
 
 """Evolve fixed sized population with Moran dynamics as a diffusion PDE"""
-function evolveVAF(cfs::CFreqspace, params::Dict, t::Real, dt::Float64; addClones::Bool=true)
+function evolveVAF(cfs::CFreqspace, params::Dict, t::Real, dt::Float64; 
+    # Legacy Euler method. Don't use.
+    addClones::Bool=true)
     ρ = params["ρ"]
     N = params["N"]
     μ = params["μ"]
@@ -60,14 +62,62 @@ function evolveVAF(cfs::CFreqspace, params::Dict, t::Real, dt::Float64; addClone
         nC_f .= n_f
         arg_f .= g_f .* nC_f
         # diffuse step euler
-        cfs.n_f[2:end-1] = nC_f[2:end-1] .+
-                            dt*r*cd2(arg_f[2:end-1], arg_f[3:end], arg_f[1:end-2], cfs.df) / N^2
+        @views n_f[2:end-1] = nC_f[2:end-1] .+
+                            dt*r*cd2(arg_f[2:end-1], 
+                                    arg_f[3:end], 
+                                    arg_f[1:end-2], cfs.df) / N^2
         # add clones
         if addClones
-            cfs.n_f[1 + newCloneInd] += r*μ*dt * 1/cfs.df
+            n_f[newCloneInd] += r*μ*dt * 1/cfs.df
         end
     end
     return nothing
+end
+
+"""Evolve fixed sized population with Moran dynamics as a diffusion PDE"""
+function evolveVAFfd(cfs::CFreqspace, params::Dict, t::Real, dt::Float64; addClones::Bool=true)
+    N = params["N"]
+    μ = params["μ"]
+    ρ = params["ρ"]
+    ϕ = params["ϕ"]
+    
+    inL = cfs.l-2
+    dx = cfs.df
+    freqInd1 = freqToInd(1/N, dx)-1 #index to add new clones
+    if freqInd1==0
+        freqInd1 = 1
+    end
+    in_x = range(dx, step=dx, length=inL)
+
+    X = ρ/N * sparse( 1:inL,1:inL, (x->x*(1-x)).(in_x) )
+    Δ = CenteredDifference(2, 2, dx, inL)
+    BC = Dirichlet0BC(Float64)
+    GD = Δ*BC
+    O = GD*DiffEqArrayOperator(X)
+
+    fluxIn = N*μ*(ρ+ϕ/2)/dx
+    c = spzeros(cfs.l-2); c[freqInd1] = N*μ*(ρ+ϕ/2)/dx
+    
+    function step!(du, u, p, t)
+        du .= O*u .+ c
+        # du[freq1] += val1
+    end
+
+    t0 = 0.0
+    t1 = t
+    u0 = copy(cfs.n_f[2:end-1])
+
+    prob = ODEProblem(step!, u0, (t0, t1))
+    alg = KenCarp4()
+    sol = solve(prob, alg, save_everystep=false)
+
+    cfs.n_f[2:end-1] .= sol.u[2]
+
+end
+
+"""Evolve fixed sized population with Moran dynamics as a diffusion PDE"""
+function evolveVAFspec(cfs::CFreqspace, params::Dict, t::Real, dt::Float64; addClones::Bool=true)
+    nothing
 end
 
 
@@ -123,7 +173,7 @@ function evolveGrowingVAF(cfs::CFreqspace, par::Dict, t::Real, dt::Float64; addC
         n_f[2:end-1] = nC_f[2:end-1] .+ dt*fpOp(nC_f, a_f, b_f, cfs.df)
         # add clones
         if addClones
-            cfs.n_f[1 + freqToInd(1/n, cfs.df)] += 2*(ρ + γ)*n*μ*dt * 1/cfs.df
+            cfs.n_f[freqToInd(1/n, cfs.df)] += 2*(ρ + γ)*n*μ*dt * 1/cfs.df
         end
     end
 
