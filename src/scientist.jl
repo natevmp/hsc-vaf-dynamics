@@ -8,29 +8,50 @@ function mutBurden(cfs::CFreqspace)::Float64
     sum(cfs.n_f[2:end-1]) * cfs.df
 end
 
-function sampler(trueFs::DFreqspace, n::Integer)
-    N = trueFs.popsize
-    sampFs = DFreqspace(n)
-    for m in 1:n
-        sampFs.n_f[m] = 
+function sampler(trueFs::DFreqspace, s::Integer)
+    n = trueFs.popsize
+    sampFs = DFreqspace(s)
+    for u in 1:s
+        sampFs.n_f[1+u] = 
             sum( 
-                [ trueFs.n_f[v] * pdf(Hypergeometric(v, N-v, n), m)
-                for v=1:N ]
+                [ trueFs.n_f[1+v] * pdf(Hypergeometric(v, n-v, s), u)
+                for v=1:n ]
             )
     end
-    trueMuts = mutBurden(trueFs)
-    sampMuts = 
-        trueMuts - 
-        sum( 
-            [ trueFs.n_f[v]*
-            ( pdf(Hypergeometric(v, N-v, n), n) 
-            + pdf(Hypergeometric(v, N-v, n), 0) ) 
-            for v=1:N ]
-        )
-
-    return sampFs, sampMuts
+    return sampFs
 end
 
+function samplerMuts(trueFs::DFreqspace, s::Integer)
+    n = trueFs.popsize
+    sampMuts = 
+        sum(
+            [ sum(
+                [ trueFs.n_f[1+v] * pdf(Hypergeometric(v, n-v, s), u)
+                for v=1:n ]
+                )
+            for u in 1:s-1 ]
+            )
+    return sampMuts
+end
+
+# pHypgeom(u,n,v,s) = stat.hypergeom.pmf(u, n, v, s)
+
+# function samplerPy(trueFs::DFreqspace, s::Integer)
+#     # n = true size
+#     # s = sample size
+#     # v = true pop variant iterator
+#     # u = sample pop variant iterator
+#     n = trueFs.popsize
+#     sampFs = DFreqspace(s)
+#     for u in 1:s
+#         sampFs.n_f[1+u] = 
+#             sum(
+#                 [ trueFs.n_f[1+v] * pHypgeom(u, n, v, s) 
+#                 for v=1:n ]
+#             )
+#     end
+#     return sampFs
+# end
 
 # ===== Run experiments =====
 
