@@ -97,6 +97,60 @@ function BirthdeathShort(n,steps,genes::Array{Int8,2},k,c,bsize,mu,VAFb::Array{F
 	return k,c, VAFb, VAF
 end
 
+function BirthdeathAlt(n,steps,genes::Array{Int8,2},k,c,bsize,mu,p,VAFb::Array{Float64,1},VAF::Array{Float64,1})
+	# loop over all steps
+	for step = 1:steps
+
+		# clean up the gene by removing all mutations that can't change anymore
+		c_last = c
+		k,c = clean_genes(n,genes,k,c)
+
+		# choose individuals for death/birth
+
+		if rand()>p
+			birth = rand(1:n)
+			death = rand(1:n)
+			genes[:,death] = genes[:,birth]
+			mutstep1 = rand(Poisson(mu))
+
+			if mutstep1 > 0
+				for i = 1:mutstep1
+					k=k+1
+
+					genes[k,birth] = 1
+				end
+			end
+		else
+			#nothing here actually dies, but it's less code written this way
+			death = rand(1:n)
+		end
+
+
+		# randomly mutate new individual with on average mu mutations
+		mutstep = rand(Poisson(mu))
+
+		if mutstep > 0
+			for i = 1:mutstep
+				k=k+1
+
+				genes[k,death] = 1
+			end
+		end
+
+
+	end
+
+	# after simulation, record VAF before and after bottleneck
+
+	bottleneck = randperm(n)[1:bsize]
+	VAFb= VAFcalc(genes[:,bottleneck],bsize,k)
+
+	VAF = VAFcalc(genes,n,k)
+
+
+	return k,c, VAFb, VAF
+end
+
 
 ## Initializer for the main function, supposedly makes everything run slightly faster
 ## n is the number of individuals
@@ -126,6 +180,27 @@ function RunBDShort(steps,n,mu,bsize)
 	VAF = zeros(Float64,n+1)
 	# run actual simulation
 	k,c,VAFb,VAF = BirthdeathShort(n,steps,genes,k,c,bsize,mu,VAFb,VAF)
+
+	return genes,k,c,VAFb,VAF
+end
+
+function RunBDAlt(steps,n,mu,p,bsize)
+
+	# initialize all values
+
+	# max genes is the maximum number of mutations to keep track of.
+	# number is based on experience, but it throws an error if the simulation
+	# hits the limit just once, so it can't bias the result
+	# it might be better to use variable length, not quite sure though
+	# ==> Nate: there's a package called ElasticArrays which implements variable length multidimensional arrays.
+	max_genes = Int(round(30*mu*(1-p/2)/(1-p)*n))
+	genes = zeros(Int8,max_genes,n)
+	k = 0
+	c = 0
+	VAFb = zeros(Float64,bsize+1)
+	VAF = zeros(Float64,n+1)
+	# run actual simulation
+	k,c,VAFb,VAF = BirthdeathAlt(n,steps,genes,k,c,bsize,mu,p,VAFb,VAF)
 
 	return genes,k,c,VAFb,VAF
 end

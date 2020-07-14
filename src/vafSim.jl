@@ -6,6 +6,8 @@ using SparseArrays
 
 export birthDeathShort
 
+export birthDeathAlt
+
 """
 Simulate the population.
 N:				size of the population
@@ -18,6 +20,81 @@ mFixed:			number of currently fixated mutations
 vafB_n:			VAF at the bottleneck
 vaf_n:			VAF for the full population
 """
+function birthDeathAlt(N, μ, p, Nbn, tmax, r)
+	"""
+	maxMuts is the maximum number of mutations to keep track of.
+	number is based on experience, but it throws an error if the simulation
+	hits the limit just once, so it can't bias the result
+	it might be better to use variable length, not quite sure though
+	==> Nate: there's a package called ElasticArrays which implements variable length multidimensional arrays.
+	"""
+	maxMuts = Integer(round(30*μ*N*(1-p/2)/(1-p)))
+	muts_loc_cell = falses(maxMuts, N)
+	# muts_loc_cell = sparse(falses(maxMuts, N))
+	mutPrevs_loc = zeros(Int16, maxMuts)
+	mLive = 0
+	mFixed = 0
+
+	t = 0
+	dt = randexp()/(r*N)
+	t += dt
+
+	while t < tmax
+
+		# choose individual cells for death/birth
+		#birthCID = rand(1:N)
+		deathCID = rand(1:N)
+		# symmetric replication event inside if-loop
+		if rand()>p
+			birthCID = rand(1:N)
+			# kill dying cell and replace with copy of dividing cell
+			mutPrevs_loc -= muts_loc_cell[:, deathCID]
+			mutPrevs_loc += muts_loc_cell[:, birthCID]
+			muts_loc_cell[:, deathCID] = muts_loc_cell[:, birthCID]
+
+			# randomly mutate new individual with on average μ mutations
+			if birthCID != deathCID
+				nMuts = rand(Poisson(μ))
+				if nMuts > 0
+					for i = 1:nMuts
+						mLive += 1
+						muts_loc_cell[mLive, birthCID] = true
+						mutPrevs_loc[mLive] += 1
+					end
+				end
+			end
+		end
+		# asymmetric replication events are equivalent to only mutations happening
+		# in a single cell
+		nMuts = rand(Poisson(μ))
+		if nMuts > 0
+			for i = 1:nMuts
+				mLive += 1
+				muts_loc_cell[mLive, deathCID] = true
+				mutPrevs_loc[mLive] += 1
+			end
+		end
+
+
+		# clean up the gene by removing all mutations that can't change anymore
+		mLive, mFixed = cleanGenes!(muts_loc_cell, mutPrevs_loc, N, mLive, mFixed)
+
+		dt = randexp()/(r*N)
+		t += dt
+	end
+
+	# after simulation, record VAF before and after bottleneck
+	bottleneck_inds = randperm(N)[1:Nbn]
+	burdenB_m = burdencalc(muts_loc_cell[:, bottleneck_inds], Nbn, mLive)
+	burden_m = burdencalc(muts_loc_cell, Nbn, mLive)
+
+
+	vafB_n = VAFcalc(muts_loc_cell[:, bottleneck_inds], Nbn, mLive)
+	vaf_n = VAFcalc(muts_loc_cell, N, mLive)
+
+	return vaf_n, vafB_n, mFixed, mLive, burden_m,burdenB_m
+end
+
 function birthDeathShort(N, μ, Nbn, steps)
 	"""
 	maxMuts is the maximum number of mutations to keep track of.
@@ -57,6 +134,7 @@ function birthDeathShort(N, μ, Nbn, steps)
 
 	# after simulation, record VAF before and after bottleneck
 	bottleneck_inds = randperm(N)[1:Nbn]
+
 	vafB_n = VAFcalc(muts_loc_cell[:, bottleneck_inds], Nbn, mLive)
 	vaf_n = VAFcalc(muts_loc_cell, N, mLive)
 
@@ -116,6 +194,17 @@ function VAFcalc(muts_loc_cell::AbstractArray{Bool, 2}, N, mLive)
 		vaf_n[1 + sum(muts_loc_cell[i, :])] += 1
 	end
 	return vaf_n
+end
+
+function burdencalc(muts_loc_cell::AbstractArray{Bool, 2}, N, mLive)
+	# mutPrev_loc = sum(muts_loc_cell, dims=2)
+	burden_m = zeros(Int64, mLive)
+	# sort the genes into their respective frequencies
+	for i = 1:N
+		# vaf_n[1+mutPrev_loc[i]] += 1
+		burden_m[1 + sum(muts_loc_cell[:, i])] += 1
+	end
+	return burden_m
 end
 
 end
