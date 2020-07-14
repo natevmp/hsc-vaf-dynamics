@@ -13,7 +13,7 @@ function main()
 # measurement:
 paramsTrue = Dict(
     "N"=>450,
-    "ρ"=>2.0,
+    "ρ"=>20.0,
     "ϕ"=>6.0,
     "μ"=>1.2
 )
@@ -32,18 +32,18 @@ referenceData[1, :] = sampFsTrue.n_f[2:end-1]
 
 # ABC settings
 # est params: N, ρ, ϕ
-priors = [Uniform(100, 1000), Uniform(1.0, 10.0), Uniform(1.0, 10.0)]
-# priors = [Uniform(100, 1000), Uniform(1.0, 10.0)]
+# priors = [Uniform(100, 1000), Uniform(1.0, 50.0), Uniform(1.0, 50.0)]
+priors = [Uniform(100, 1000), Uniform(1.0, 50.0)]
 # priors = [Uniform(100, 1000)]
 
-# A function that simulates the model 
+# A function that simulates the model
 function simulatorFunction(paramsEst)
     params = Dict(
         "N"=> Integer(round(paramsEst[1])),
         # "ρ"=>paramsTrue["ρ"],
         "ρ"=>paramsEst[2],
-        # "ϕ"=>paramsTrue["ϕ"],
-        "ϕ"=>paramsEst[3],
+        "ϕ"=>paramsTrue["ϕ"],
+        # "ϕ"=>paramsEst[3],
         "μ"=>paramsTrue["μ"]
     )
     dfs = VAFDyn.DFreqspace(params["N"])
@@ -58,9 +58,9 @@ function simulatorFunction(paramsEst)
 end
 
 # Simulation
-nParticles = 100
+nParticles = 200
 threshold = 10.0
-maxIter = 2e1
+maxIter = 2e4
 
 println("running ABC")
 

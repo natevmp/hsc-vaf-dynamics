@@ -19,13 +19,13 @@ vafB_n:			VAF at the bottleneck
 vaf_n:			VAF for the full population
 """
 function birthDeathShort(N, μ, Nbn, steps)
-	"""
+	#=
 	maxMuts is the maximum number of mutations to keep track of.
 	number is based on experience, but it throws an error if the simulation
 	hits the limit just once, so it can't bias the result
 	it might be better to use variable length, not quite sure though
 	==> Nate: there's a package called ElasticArrays which implements variable length multidimensional arrays.
-	"""
+	=#
 	maxMuts = Integer(round(10*μ*N))
 	muts_loc_cell = falses(maxMuts, N)
 	# muts_loc_cell = sparse(falses(maxMuts, N))
@@ -55,12 +55,15 @@ function birthDeathShort(N, μ, Nbn, steps)
 		mLive, mFixed = cleanGenes!(muts_loc_cell, mutPrevs_loc, N, mLive, mFixed)
 	end
 
-	# after simulation, record VAF before and after bottleneck
+	# record VAF before and after bottleneck
 	bottleneck_inds = randperm(N)[1:Nbn]
 	vafB_n = VAFcalc(muts_loc_cell[:, bottleneck_inds], Nbn, mLive)
 	vaf_n = VAFcalc(muts_loc_cell, N, mLive)
 
-	return vaf_n, vafB_n, mFixed, mLive
+	# single cell mutational burden
+	nMuts_cell = mutBurdenSingleCell(muts_loc_cell)
+
+	return vaf_n, vafB_n, nMuts_cell, mFixed, mLive
 end
 
 """
@@ -117,5 +120,14 @@ function VAFcalc(muts_loc_cell::AbstractArray{Bool, 2}, N, mLive)
 	end
 	return vaf_n
 end
+
+"""
+Get mutational burden of each single cell in the population.
+"""
+function mutBurdenSingleCell(muts_loc_cell::AbstractArray{Bool, 2})
+	nMuts_cell = vec(sum(muts_loc_cell, dims=1))
+end
+
+
 
 end
