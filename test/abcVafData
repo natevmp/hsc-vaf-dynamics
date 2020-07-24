@@ -1,0 +1,136 @@
+#!/usr/bin/env julia
+
+module ABCVafData
+
+include("../src/vafdyn.jl")
+using .VAFDyn
+using GpABC, OrdinaryDiffEq, Distances, Distributions, JLD, DelimitedFiles
+using Plots
+plotly()
+
+function main()
+
+# measurement:
+
+# ===== Load Data =====
+
+untypedM = readdlm("data/Shearwater_calls_FDR0.95_all_muts.txt", '\t', Any; skipstart=1)
+untypedM = untypedM[:, 5: end-1]
+replace!(untypedM, "NA"=>0)
+
+variants_var_col = Array{Int}(untypedM)
+
+# ===== Order data =====
+HSCMask_col = fill(false, size(variants_var_col, 2))
+HSCMask_col[1:73] .= true
+HSCMask_col[125:end] .= true
+HPCMask_col = .!HSCMask_col
+
+# mutational burden
+mutBurden_col = sum(variants_var_col, dims=1)
+
+
+# ===== variant allele frequencies =====
+vaf_var = sum(variants_var_col, dims=2) / 140
+vafHSC_var = sum(variants_var_col[:, HSCMask_col], dims=2)
+vafHPC_var = sum(variants_var_col[:, HPCMask_col], dims=2)
+
+# p1 = histogram(vafHSC_var, yaxis=:log10, bins=sum(HSCMask_col),
+#         ylims=(10^-0.3, 10^5), xlims=(0, 0.6), label="HSC", fillalpha=0.5, linealpha=0.4, dpi=200)
+# xlabel!("variant frequency")
+# ylabel!("number of variants")
+# title!("HSC")
+# display(p1)
+# println("number of HSC cells:", sum(HSCMask_col))
+
+function vafHist(data, min, max, delta=1)
+  N = length(data)             # How many elements in the input vector 'data' ?
+  nbins = max-min+1
+  out = zeros(nbins)           # Let's initialize the output data structures for the bin count
+  bin = zeros(nbins)           # and for the bin centres...
+
+  binCur = min                  # Left edge
+  for k=1:nbins
+    out[k] = length(findall(data .== binCur)) # Count how many elements are in bin
+    bin[k] = binCur             # bin value
+    binCur += delta            # New left edge
+  end
+  return out, bin
+end
+
+vafHSC_f, _ = vafHist(vafHSC_var, 1, sum(HSCMask_col)-1)
+
+# p2 = plot(1:sum(HSCMask_col), vafHSC_f, yaxis=:log10, ylims=(10^-0.3, 10^5))
+# display(p2)
+
+
+referenceData = zeros(Float64, 1, length(vafHSC_f)-1)
+referenceData[1, :] = vafHSC_f[1:end-1]
+# ABC settings
+# est params: N, ρ, ϕ
+# priors = [Uniform(100, 1000), Uniform(1.0, 50.0), Uniform(1.0, 50.0)]
+priors = [Uniform(1e3, 1e6), Uniform(0.0, 1.0)]
+
+
+paramsKnown = Dict(
+    "λ"=>3.0,
+    "μ"=>5.8,
+    "Ns"=>88,
+    "t"=>59
+)
+# A function that simulates the model
+function simulatorFunction(paramsEst)
+
+    # true params
+    t = paramsKnown["t"]
+    N = paramsEst[1]
+    p = paramsEst[2]
+    μ = paramsKnown["μ"]
+    λ = paramsKnown["λ"]
+
+    # sample params
+    Ns = paramsKnown["Ns"]
+    λs = λ*(Ns/N)^2
+    μs = μ*(N/Ns)
+
+    params = Dict(
+        "N"=> Ns,
+        "ρ"=> λs*p,
+        "ϕ"=> λs*(1-p),
+        "μ"=> μs
+    )
+    dfs = VAFDyn.DFreqspace(params["N"])
+    VAFDyn.evolveVAF(dfs, params, t)
+    # sampFs = VAFDyn.sampler(dfs, sampleSize)
+
+    # ABC algorithm really wants a 2d matrix for some reason...
+    simData = zeros(Float64, 1, length(dfs.n_f)-2)
+    simData[1, :] = dfs.n_f[2:end-1]
+    return simData
+end
+
+# Simulation
+nParticles = 200
+threshold = 10.0
+maxIter = 2e6
+
+println("running ABC")
+
+@time simResult = SimulatedABCRejection(referenceData, simulatorFunction, priors, threshold, nParticles; max_iter=convert(Int, maxIter), write_progress=false)
+
+# nDesignPoints = 200
+# @time emuResult = EmulatedABCRejection(referenceData, simulatorFunction, priors, threshold, nParticles, nDesignPoints; max_iter=convert(Int, 5e3), write_progress=false)
+save("ABCDatarun_"*string(Integer(maxIter))*"iter.jld", "simResult", simResult)
+# save("ABCrun3d.jld", "paramsTrue", paramsTrue, "sampleSize", sampleSize, "evolveTime", evolveTime, "emuResult", emuResult)
+p1 = plot(simResult)
+# p1 = plot(emuResult)
+display(p1)
+
+end
+
+
+
+
+main()
+
+end

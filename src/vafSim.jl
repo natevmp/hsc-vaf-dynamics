@@ -17,6 +17,7 @@ muts_loc_cell:	matrix for which mutations all individuals hold
 mLive:			number of currently non-fixated mutations
 mFixed:			number of currently fixated mutations
 μ:				mutation rate
+p:				probability of asymmetric (vs symmetric) division
 vafB_n:			VAF at the bottleneck
 vaf_n:			VAF for the full population
 """
@@ -92,7 +93,7 @@ function birthDeathAlt(N, μ, p, Nbn, tmax, r)
 	vafB_n = VAFcalc(muts_loc_cell[:, bottleneck_inds], Nbn, mLive)
 	vaf_n = VAFcalc(muts_loc_cell, N, mLive)
 
-	return vaf_n, vafB_n, mFixed, mLive, burden_m,burdenB_m
+	return vaf_n, vafB_n, mFixed, mLive, burden_m, burdenB_m
 end
 
 function birthDeathShort(N, μ, Nbn, steps)

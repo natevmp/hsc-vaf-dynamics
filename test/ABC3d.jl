@@ -5,8 +5,8 @@ module ABCVaf
 include("../src/vafdyn.jl")
 using .VAFDyn
 using GpABC, OrdinaryDiffEq, Distances, Distributions, JLD
-# using Plots
-# plotly()
+using Plots
+plotly()
 
 function main()
 
@@ -59,8 +59,8 @@ end
 
 # Simulation
 nParticles = 200
-threshold = 10.0
-maxIter = 2e4
+threshold = 7.0
+maxIter = 1e4
 
 println("running ABC")
 
@@ -68,15 +68,16 @@ println("running ABC")
 
 # nDesignPoints = 200
 # @time emuResult = EmulatedABCRejection(referenceData, simulatorFunction, priors, threshold, nParticles, nDesignPoints; max_iter=convert(Int, 5e3), write_progress=false)
-
-# p1 = plot(simResult)
-# # p1 = plot(emuResult)
-# display(p1)
-
-
 save("ABCrun3d_"*string(Integer(maxIter))*"iter.jld", "paramsTrue", paramsTrue, "sampleSize", sampleSize, "evolveTime", evolveTime, "simResult", simResult)
 # save("ABCrun3d.jld", "paramsTrue", paramsTrue, "sampleSize", sampleSize, "evolveTime", evolveTime, "emuResult", emuResult)
+p1 = plot(simResult)
+# p1 = plot(emuResult)
+display(p1)
+
 end
+
+
+
 
 main()
 

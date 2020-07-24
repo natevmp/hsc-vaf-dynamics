@@ -6,7 +6,6 @@ gr()
 using .VAFDyn
 
 ## ===== Load Data =====
-println("test")
 
 untypedM = readdlm("data/Shearwater_calls_FDR0.95_all_muts.txt", '\t', Any; skipstart=1)
 untypedM = untypedM[:, 5: end-1]
