@@ -38,12 +38,14 @@ struct VFreqspace{F<:AbstractFloat}
 end
 
 function VFreqspace(N::Integer, l::Integer)
-    a = 2/((l-2)*(l-1)) - 2/((l-2)*N)
     # freqs_f = (i -> 1/N+a*i).()
-    freqs_f = Array{Float64, 1}(undef, l)
+    # freqs_f = Array{Float64, 1}(undef, l)
+    freqs_f = zeros(Float64, l)
     freqs_f[1] = 0
-    for i in 1:l-1
-        freqs_f[1+i] = freqs_f[i] + 1/N+a*(i-1)
+    a = 2 * ( N-(l-1) )/( N*(l-1)*(l-2) )
+    df_m = [1/N + (i-1)*a for i in 1:l-1]
+    for m in 1:l-1
+        freqs_f[1+m] = sum(df_m[1:m])
     end
     n_f = zeros(Float64, l)
     VFreqspace(freqs_f, n_f)

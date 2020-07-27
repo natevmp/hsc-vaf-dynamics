@@ -1,3 +1,5 @@
+module CompoundPoisson
+
 using Random, Distributions
 
 """
@@ -14,4 +16,13 @@ function randComPois(λ::Real, μ::Real, nSamples)
     Y_s = sum.(rand.(Pμ, n_s))
 end
 
-#@time randComPois(10,4,100)
+function randComPois(λ::Real, p::Real, μ::Real, nSamples)
+    ρ = λ*p
+    ϕ = λ*(1-p)
+    Pλ = Poisson(2ρ+ϕ)
+    Pμ = Poisson(μ)
+    n_s = rand(Pλ, nSamples)
+    Y_s = sum.(rand.(Pμ, n_s))
+end
+
+end

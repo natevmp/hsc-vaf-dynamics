@@ -11,7 +11,7 @@ function evolveVAF(dfs::DFreqspace, params::Dict, t::Number; addClones::Bool=tru
 
     # Calculate frequency dependent move rate
     moveRate_f = ρ * N * (f->f*(1.0 - f)).(f_f)
-    
+
     fluxIn = N*μ*(ρ+ϕ/2)
     # if mutation is turned of set incoming flux to 0
     !addClones ? fluxIn = 0 : nothing
@@ -27,7 +27,7 @@ function evolveVAF(dfs::DFreqspace, params::Dict, t::Number; addClones::Bool=tru
         dn_f[2] += fluxIn
     end
 
-    n0_f = n_f    
+    n0_f = n_f
     prob = ODEProblem(step!, n0_f, (0.0, t))
     # alg = KenCarp4() #stable for stiff PDE
     alg = TRBDF2() #stablest for stiff PDE
@@ -45,7 +45,7 @@ function evolveVAFfd(cfs::CFreqspace, params::Dict, t::Real; addClones::Bool=tru
     μ = params["μ"]
     ρ = params["ρ"]
     ϕ = params["ϕ"]
-    
+
     inL = cfs.l-2
     dx = cfs.df
     freqInd1 = freqToInd(1/N, dx)-1 #index to add new clones
@@ -63,7 +63,7 @@ function evolveVAFfd(cfs::CFreqspace, params::Dict, t::Real; addClones::Bool=tru
     fluxIn = N*μ*(ρ+ϕ/2)/dx
     c = spzeros(cfs.l-2)
     addClones ? c[freqInd1]=fluxIn : nothing
-    
+
     function step!(du, u, p, t)
         du .= L*u .+ c
     end
@@ -88,9 +88,8 @@ function evolveVAFfd(vfs::VFreqspace, params::Dict, t::Real; addClones::Bool=tru
     μ = params["μ"]
     ρ = params["ρ"]
     ϕ = params["ϕ"]
-    
+
     inL = length(vfs)-2
-    # dx = vfs.df
     dx_i = vfs.freqs_f[2:end] .- vfs.freqs_f[1:end-1]
     freqInd1 = 1 #index to add new clones
 
@@ -105,7 +104,7 @@ function evolveVAFfd(vfs::VFreqspace, params::Dict, t::Real; addClones::Bool=tru
     fluxIn = N*μ*(ρ+ϕ/2)/dx_i[1]
     c = spzeros(inL)
     addClones ? c[freqInd1]=fluxIn : nothing
-    
+
     function step!(du, u, p, t)
         du .= L*u .+ c
     end
@@ -238,7 +237,7 @@ function evolveVAFleg(dfs::DFreqspace, params::Dict, t::Number, dt::Float64; add
 end
 
 """Evolve fixed sized population with Moran dynamics as a diffusion PDE"""
-function evolveVAFleg(cfs::CFreqspace, params::Dict, t::Real, dt::Float64; 
+function evolveVAFleg(cfs::CFreqspace, params::Dict, t::Real, dt::Float64;
     addClones::Bool=true)
     # Legacy Euler method. Don't use.
     ρ = params["ρ"]
@@ -259,8 +258,8 @@ function evolveVAFleg(cfs::CFreqspace, params::Dict, t::Real, dt::Float64;
         arg_f .= g_f .* nC_f
         # diffuse step euler
         @views n_f[2:end-1] = nC_f[2:end-1] .+
-                            dt*r*cd2(arg_f[2:end-1], 
-                                    arg_f[3:end], 
+                            dt*r*cd2(arg_f[2:end-1],
+                                    arg_f[3:end],
                                     arg_f[1:end-2], cfs.df) / N^2
         # add clones
         if addClones
@@ -278,7 +277,7 @@ function evolveVAFalt(cfs::CFreqspace, params::Dict, t::Real, dt::Float64; addCl
     μ = params["μ"]
     ρ = params["ρ"]
     ϕ = params["ϕ"]
-    
+
     l = cfs.l
     dx = cfs.df
     f_x = cfs.freqs_f
@@ -292,7 +291,7 @@ function evolveVAFalt(cfs::CFreqspace, params::Dict, t::Real, dt::Float64; addCl
     L = Δ*X
 
     addClones ? fluxIn=N*μ*(ρ+ϕ/2)/dx : fluxIn = 0
-    
+
     function step!(du, u, p, t)
         mul!(du, L, u)
         du[freqInd1] += fluxIn
