@@ -8,6 +8,7 @@ export birthDeathShort
 
 export birthDeathAlt
 
+
 """
 Simulate the population.
 N:				size of the population
@@ -28,7 +29,7 @@ function birthDeathAlt(N, μ, p, Nbn, tmax, r)
 	it might be better to use variable length, not quite sure though
 	==> Nate: there's a package called ElasticArrays which implements variable length multidimensional arrays.
 	"""
-	maxMuts = Integer(round(30*μ*N*(1-p/2)/(1-p)))
+	maxMuts = Integer(round(200*μ*N*(1-p/2)/(1-p)))
 	muts_loc_cell = falses(maxMuts, N)
 	# muts_loc_cell = sparse(falses(maxMuts, N))
 	mutPrevs_loc = zeros(Int16, maxMuts)
@@ -77,6 +78,7 @@ function birthDeathAlt(N, μ, p, Nbn, tmax, r)
 
 
 		# clean up the gene by removing all mutations that can't change anymore
+
 		mLive, mFixed = cleanGenes!(muts_loc_cell, mutPrevs_loc, N, mLive, mFixed)
 
 		dt = randexp()/(r*N)
@@ -86,13 +88,19 @@ function birthDeathAlt(N, μ, p, Nbn, tmax, r)
 	# after simulation, record VAF before and after bottleneck
 	bottleneck_inds = randperm(N)[1:Nbn]
 	burdenB_m = burdencalc(muts_loc_cell[:, bottleneck_inds], Nbn, mLive)
-	burden_m = burdencalc(muts_loc_cell, Nbn, mLive)
+	burden_m = burdencalc(muts_loc_cell, N, mLive)
+
+	#distanceB_m = createtree(muts_loc_cell[:, bottleneck_inds], Nbn, mLive)
+	#distance_m = createtree(muts_loc_cell, N, mLive)
+
+	#distanceB_m = distancecalc(muts_loc_cell[:, bottleneck_inds], Nbn, mLive)
+	#distance_m = distancecalc(muts_loc_cell, N, mLive)
 
 
 	vafB_n = VAFcalc(muts_loc_cell[:, bottleneck_inds], Nbn, mLive)
 	vaf_n = VAFcalc(muts_loc_cell, N, mLive)
 
-	return vaf_n, vafB_n, mFixed, mLive, burden_m,burdenB_m
+	return vaf_n, vafB_n, mFixed, mLive, burden_m,burdenB_m #, distanceB_m,distance_m
 end
 
 function birthDeathShort(N, μ, Nbn, steps)
@@ -167,6 +175,7 @@ function cleanGenes!(muts_loc_cell::AbstractArray{Bool, 2}, mutPrevs_loc, N, mLi
 			mFixed += 1
 		end
 		# find and remove genes that died out
+
 		if mutPrevs_loc[loc] == 0
 			# swap dead and live var mutations
 			muts_loc_cell[loc, :] = muts_loc_cell[mLive, :]
@@ -209,6 +218,73 @@ function burdencalc(muts_loc_cell::AbstractArray{Bool, 2}, N, mLive)
 		burden_m[1 + sum(muts_loc_cell[:, i])] += 1
 	end
 	return burden_m
+end
+
+function distancecalc(muts_loc_cell::AbstractArray{Bool, 2}, N, mLive)
+	# mutPrev_loc = sum(muts_loc_cell, dims=2)
+	distance_m = zeros(Int64, mLive+1)
+	# sort the genes into their respective frequencies
+	for i = 1:N
+		for j = (i+1):N
+			# vaf_n[1+mutPrev_loc[i]] += 1
+				distance_m[1 + sum(abs.(muts_loc_cell[:, i]-muts_loc_cell[:,j]))] += 1
+
+		end
+	end
+	return distance_m
+end
+
+function createtree(muts_loc_cell::AbstractArray{Bool, 2}, N, mLive)
+
+	distance_m = zeros(Int64, mLive+1)
+
+	mutscurrent_loc_cell = deepcopy(muts_loc_cell)
+
+	h = 1
+	cdis = 0
+	cind = N
+
+	maxloops = 100000
+	loop = 1
+	#println(muts_loc_cell)
+	while cind > 1
+		loop += 1
+		nocdis = 1
+		#println(string("loop = ", loop, "; cdis = ", cdis, "; cind = ", cind))
+		#println(muts_loc_cell)
+		for k = cind:-1:1
+			#println(string("k =", k))
+			for l = (k-1):-1:1
+				#println(string("k =", k, "; l =", l, "; distance = ", sum(abs.(mutsc_loc_cell[:, k]-mutsc_loc_cell[:,l])) ))
+				if k != l
+					#println(string(" l =", l, "; distance = ", sum(abs.(mutscurrent_loc_cell[:, k]-mutscurrent_loc_cell[:,l])) ))
+					if sum(abs.(mutscurrent_loc_cell[:, k]-mutscurrent_loc_cell[:,l])) == cdis
+						#println(muts_loc_cell)
+						newmuttemp = ((mutscurrent_loc_cell[:, k] + mutscurrent_loc_cell[:, l]).>1)
+						distance_m[1 + sum(abs.(mutscurrent_loc_cell[:, k]-newmuttemp))] += 1
+						distance_m[1 + sum(abs.(mutscurrent_loc_cell[:, l]-newmuttemp))] += 1
+						mutscurrent_loc_cell[:,k] =  mutscurrent_loc_cell[:,cind]
+						mutscurrent_loc_cell[:,l] = newmuttemp
+						mutscurrent_loc_cell[:,cind] .= 0
+						cind -= 1
+						nocdis = 0
+						cdis = 0
+						#println(muts_loc_cell)
+						break
+					end
+				end
+			end
+		end
+		#println(muts_loc_cell)
+		if nocdis == 1
+			cdis += 1
+		end
+		if loop > maxloops
+			println("createtree stopped early")
+			break
+		end
+	end
+	return distance_m
 end
 
 """

@@ -116,4 +116,14 @@
 	If we want to know the true number of asymmetric AND symmetric replication events $ \tau $, it is $ \tau = t_f \cdot \frac{1}{1-p}$.\\
 	
 	In conclusion, we need to know one of either $p$, $N$ or $t$ to find out the other two.
+	
+	\section{Looking at cell burden}
+	
+	By looking at the mutational burden, we can derive the rate $ r_{cell} $ by which the cell has divided if we know the mutation rate $ \mu $ and the real time that has passed $ \tau $: If a cell has a burden of $ \sim 100$, we know the mutation rate is $ ~1.3 $, and $ 10 $ years have passed, then $ r_{cell} \approx 1000/(1.3 \cdot 10) \approx 7.7 $ per year. What does this tell us about the aforementioned $r = \rho +\phi$ ? \\
+	For this purpose, imagine a population of only 2 cells and that there is no chance to randomly "overwrite" yourself during symmetric cell divisions(this makes the difference more stark between them, but does fundamentally change the principles). First, we assume $ \phi = 1$ and $ \rho = 0$, i.e. cells only have asymmetric cell division and hence "overwrite" themselves. If you wait $\tau = 100$ units of time, both cells will have $ \phi \cdot \tau = 100$ mutations.\\
+	Now, let's assume the opposite: $ \rho = 1$, $ \phi = 0$. Now it gets more interesting. Since in this case cell A is overwriting cell B or vice versa, in every replication event, both cells will gain a mutation! This means that in every time step, both cells gain 2 mutations, as opposed to 1, when they only replace themselves. Hence, both cells will have $ \rho \cdot 2 \cdot \tau = 200 $ mutations.\\
+	If we know see $ 100 $ mutations in an experiment, even if we know $ \mu $ and $ \tau $, there is still a factor of 2 by which the true $ r $ might differ from all the $ r_{cell} $.\\
+	Even worse, the variable we're actually interested in is $ \rho $ because this variable controls the shape of the VAF-distribution, $ \phi $ has no influence on that. $ \rho $ can still be anything between 0 and $ r_{cell}/2 $ solely based on the mutation burden. For $\rho = r = r_{cell}/2 $, it corresponds simply to the $p=0$ estimate of the ABC for N, and  $ \rho \rightarrow 0 $ simply leads to $ N \rightarrow 0 $ as well, so there is no added information compared to what the ABC finds when analyzing the VAF. \\
+	\\
+	With perfect strand segregation, this might be solvable since asymmetric cell division would have no effect on the distribution, but as soon as it becomes non-perfect, it's unsolvable again and just changes the factor $ \frac{1 - p}{ 1 - p/2} $ to $ \frac{1 - p}{ 1 - p(1+s)/2} $, with s being the likelihood of strand segregation.
 \end{document}

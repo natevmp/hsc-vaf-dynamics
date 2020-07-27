@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.20 (MiKTeX 2.9.7050 64-bit) (preloaded format=pdflatex 2019.12.6)  1 JUL 2020 09:27
+This is pdfTeX, Version 3.14159265-2.6-1.40.20 (MiKTeX 2.9.7050 64-bit) (preloaded format=pdflatex 2019.12.6)  15 JUL 2020 09:37
 entering extended mode
 **./lines.tex
 (lines.tex
@@ -394,27 +394,32 @@ Underfull \hbox (badness 10000) in paragraph at lines 115--117
 
  []
 
-[3] (lines.aux) ) 
+
+Underfull \hbox (badness 10000) in paragraph at lines 122--129
+
+ []
+
+[3] [4] (lines.aux) ) 
 Here is how much of TeX's memory you used:
- 5766 strings out of 492891
- 83257 string characters out of 3133345
- 172194 words of memory out of 3000000
- 9588 multiletter control sequences out of 15000+200000
+ 5770 strings out of 492891
+ 83303 string characters out of 3133345
+ 173194 words of memory out of 3000000
+ 9592 multiletter control sequences out of 15000+200000
  9179 words of font info for 27 fonts, out of 3000000 for 9000
  1141 hyphenation exceptions out of 8191
- 42i,6n,40p,679b,123s stack positions out of 5000i,500n,10000p,200000b,50000s
-{C:/Program Files/MiKTeX 2.9/fonts/enc/dvips/cm-super/cm-super
--t1.enc}<C:/Program Files/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmmi10.pfb>
-<C:/Program Files/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmmi7.pfb><C:/Progr
-am Files/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmr10.pfb><C:/Program Files/
-MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmr7.pfb><C:/Program Files/MiKTeX 2.9
-/fonts/type1/public/amsfonts/cm/cmsy10.pfb><C:/Program Files/MiKTeX 2.9/fonts/t
-ype1/public/amsfonts/cm/cmsy7.pfb><C:/Program Files/MiKTeX 2.9/fonts/type1/publ
-ic/cm-super/sfbx1440.pfb><C:/Program Files/MiKTeX 2.9/fonts/type1/public/cm-sup
-er/sfrm1000.pfb>
-Output written on lines.pdf (3 pages, 98390 bytes).
+ 42i,6n,40p,679b,125s stack positions out of 5000i,500n,10000p,200000b,50000s
+{C:/Program Files/MiKTeX 2.9/fonts/enc/dvips/cm-super/cm-s
+uper-t1.enc}<C:/Program Files/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmmi10.
+pfb><C:/Program Files/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmmi7.pfb><C:/P
+rogram Files/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmr10.pfb><C:/Program Fi
+les/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmr7.pfb><C:/Program Files/MiKTeX
+ 2.9/fonts/type1/public/amsfonts/cm/cmsy10.pfb><C:/Program Files/MiKTeX 2.9/fon
+ts/type1/public/amsfonts/cm/cmsy7.pfb><C:/Program Files/MiKTeX 2.9/fonts/type1/
+public/cm-super/sfbx1440.pfb><C:/Program Files/MiKTeX 2.9/fonts/type1/public/cm
+-super/sfrm1000.pfb>
+Output written on lines.pdf (4 pages, 105533 bytes).
 PDF statistics:
- 45 PDF objects out of 1000 (max. 8388607)
+ 48 PDF objects out of 1000 (max. 8388607)
  0 named destinations out of 1000 (max. 500000)
  1 words of extra memory for PDF output out of 10000 (max. 10000000)
 

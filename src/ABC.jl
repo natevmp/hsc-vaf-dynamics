@@ -51,7 +51,7 @@ function ABC(VAF,esize,osize,cnumber,limit,maxsteps)
 
             tempsteps = time_solution[k] - maxsteps/20 + rand()*maxsteps/10
 
-            params_fit = Dict("ρ" => 1, "μ" => 1, "N" => n)
+            params_fit = Dict("ρ" => 1, "μ" => 1, "N" => n, "ϕ" => 0)
 
             dfs_fit = VAFDyn.DFreqspace(params_fit["N"])
 
@@ -81,7 +81,7 @@ function ABC(VAF,esize,osize,cnumber,limit,maxsteps)
             t_new = StatsBase.sample(1:esize,Weights(fitness))
             tempsteps = time_solution[t_new] - maxsteps/20 + rand()*maxsteps/10
 
-            params_fit = Dict("ρ" => 1, "μ" => 1, "N" => n)
+            params_fit = Dict("ρ" => 1, "μ" => 1, "N" => n, "ϕ" => 0)
 
             dfs_fit = VAFDyn.DFreqspace(params_fit["N"])
 
@@ -122,7 +122,7 @@ function ABC(VAF,esize,osize,cnumber,limit,maxsteps)
 
     tempsteps = time_solution[argmax(fitness)]
 
-    params_fit = Dict("ρ" => 1, "μ" => 1, "N" => n)
+    params_fit = Dict("ρ" => 1, "μ" => 1, "N" => n, "ϕ" => 0)
 
     dfs_fit = VAFDyn.DFreqspace(params_fit["N"])
 

@@ -14,4 +14,4 @@ function randComPois(λ::Real, μ::Real, nSamples)
     Y_s = sum.(rand.(Pμ, n_s))
 end
 
-@time randComPois(10,4,100)
+#@time randComPois(10,4,100)
