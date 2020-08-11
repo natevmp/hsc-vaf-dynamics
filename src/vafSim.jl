@@ -36,14 +36,15 @@ function birthDeathAlt(N, μ, p, Nbn, tmax, r)
 	mLive = 0
 	mFixed = 0
 
+	divExp = Exponential(1/(r*N))
 	t = 0
-	dt = randexp()/(r*N)
+	# dt = randexp()/(r*N)
+	dt = rand(divExp)
 	t += dt
 
 	while t < tmax
 
 		# choose individual cells for death/birth
-		#birthCID = rand(1:N)
 		deathCID = rand(1:N)
 		# symmetric replication event inside if-loop
 		if rand()>p
@@ -80,7 +81,8 @@ function birthDeathAlt(N, μ, p, Nbn, tmax, r)
 		# clean up the gene by removing all mutations that can't change anymore
 		mLive, mFixed = cleanGenes!(muts_loc_cell, mutPrevs_loc, N, mLive, mFixed)
 
-		dt = randexp()/(r*N)
+		# dt = randexp()/(r*N)
+		dt = rand(divExp)
 		t += dt
 	end
 
