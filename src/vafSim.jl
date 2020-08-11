@@ -103,11 +103,7 @@ function birthDeathAlt(N, μ, p, Nbn, tmax, r)
 	vafB_n = VAFcalc(muts_loc_cell[:, bottleneck_inds], Nbn, mLive)
 	vaf_n = VAFcalc(muts_loc_cell, N, mLive)
 
-<<<<<<< HEAD
 	return vaf_n, vafB_n, mFixed, mLive, burden_m,burdenB_m #, distanceB_m,distance_m
-=======
-	return vaf_n, vafB_n, mFixed, mLive, burden_m, burdenB_m
->>>>>>> 9e149a7d26d9195db9e5d26ef2f07c5f4d9fe80f
 end
 
 function birthDeathShort(N, μ, Nbn, steps)
