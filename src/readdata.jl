@@ -47,7 +47,7 @@ normapproxemp_prev = Normal(mean(burden_ind),sqrt(var(burden_ind)))
 
 
 x = 500:1500
-
+#=
 plot(x,pdf.(normapprox_prev, x),label="model-based approximation")
 plot!(x,pdf.(normapproxemp_prev, x), label="empiric approximation")
 plot!(x,burden_prev[x]/sum(burden_prev),label="smoothed data")
@@ -55,27 +55,26 @@ plot!(x,burden_prev[x]/sum(burden_prev),label="smoothed data")
 fig_name = string("../Figures/experiment/burden")
 
 savefig(fig_name)
+=#
 
-#=
-t_bn,mu_bn = ABC(VAF,10,10,100,20,1000)
+#t_bn,mu_bn = ABC(VAF,10,10,100,20,1000)
 
-N_est = n*mu_bn/1.3
-t_est = (N_est/n)^2*t_bn
+#N_est = n*mu_bn/1.3
+#t_est = (N_est/n)^2*t_bn
 
-params_fit = Dict("ρ" => 1, "μ" => 1, "N" => n)
+#params_fit = Dict("ρ" => 1, "μ" => 1, "N" => n)
 
-dfs_fit = VAFDyn.DFreqspace(params_fit["N"])
+#dfs_fit = VAFDyn.DFreqspace(params_fit["N"])
 
-VAFDyn.evolveVAF(dfs_fit, params_fit, t_bn/n, 1/(100*n))
+#VAFDyn.evolveVAF(dfs_fit, params_fit, t_bn/n, 1/(100*n))
 
 plot(1:n,VAF[2:end],label="Experiment",legend=:topleft,dpi=300)
-plot!(1:n,dfs_fit.n_f[2:end].*mu_bn,label="ABC solution")
+#plot!(1:n,dfs_fit.n_f[2:end].*mu_bn,label="ABC solution")
 
-title!(string("VAFdistribution, est. N =", Int(round(N_est)),". Est. t =", round(t_est,digits=-2)))
+#title!(string("VAFdistribution, est. N =", Int(round(N_est)),". Est. t =", round(t_est,digits=-2)))
 xlabel!("Prevalence")
 ylabel!("Number of mutations")
 
 fig_name = string("../Figures/experiment/VAF")
 
 savefig(fig_name)
-=#
