@@ -42,3 +42,6 @@ hydra/testVAF_jobfile.pbs
 hydra/submit.sh
 hydra/abc3Alt_jobfile.pbs
 hydra/abc3_jobfile.pbs
+
+#data, some files got to big
+data/bottleneck/
