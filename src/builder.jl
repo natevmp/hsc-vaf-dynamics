@@ -16,3 +16,17 @@ function addClones(cfs::CFreqspace, freq::Real, n::Real=1.)
     ind = Integer(round(freq / cfs.df ))
     cfs.n_f[1+ind] += n * 1/cfs.df
 end
+
+"""
+Create discrete probability space (DFreqspace object) from irregularly spaced probability density object (VFreqspace) through spline interpolation and scaling
+"""
+function makeDFSfromVFS(vfs::VFreqspace, N::Integer)
+
+    cnSpline = Spline1D(vfs.freqs_f[2:end-1], vfs.n_f[2:end-1])
+    dfs = DFreqspace(N)
+    # for (i, f) in enumerate(dfs.freqs_f[2:end-1])
+    #     dfs.n_f[i] = cnSpline(f)/N
+    # end
+    dfs.n_f[2:end-1] .= cnSpline(dfs.freqs_f[2:end-1])/N
+    return dfs
+end

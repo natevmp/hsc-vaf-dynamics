@@ -1,3 +1,5 @@
+# %% codecell
+
 include("src/vafdyn.jl")
 using .VAFDyn
 using OrdinaryDiffEq, Distances, Distributions
@@ -7,10 +9,10 @@ using ApproxBayes
 # %% codecell
 # create reference measurement:
 paramsTrue = Dict(
-    "N"=>300,
-    "ρ"=>2.0,
-    "ϕ"=>6.0,
-    "μ"=>1.2
+    "N"=>11000,
+    "ρ"=>1.0,
+    "ϕ"=>2.0,
+    "μ"=>5.8
 )
 evolveTime = 59
 
@@ -26,13 +28,17 @@ function mutBurdenStats(params, evolveTime)
     return mean, var
 end
 
+display(paramsTrue)
+println(mutBurdenStats(paramsTrue, evolveTime))
+
+# %%
 mutMean, mutVar = mutBurdenStats(paramsTrue, evolveTime)
 
 
 # sampleSize = 80
 lSize = 151
 dfsTrue = VAFDyn.DFreqspace(paramsTrue["N"])
-VAFDyn.evolveVAF(dfsTrue, paramsTrue, evolveTime)
+@time VAFDyn.evolveVAF(dfsTrue, paramsTrue, evolveTime)
 # sampFsTrue = VAFDyn.sampler(dfsTrue, sampleSize)
 vfsTrue = VAFDyn.VFreqspace(paramsTrue["N"], lSize)
 VAFDyn.evolveVAFfd(vfsTrue, paramsTrue, evolveTime)

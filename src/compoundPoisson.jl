@@ -17,8 +17,8 @@ function randComPois(λ::Real, μ::Real, nSamples)
 end
 
 function randComPois(λ::Real, p::Real, μ::Real, nSamples)
-    ρ = λ*p
-    ϕ = λ*(1-p)
+    ρ = λ*(1-p)
+    ϕ = λ*p
     Pλ = Poisson(2ρ+ϕ)
     Pμ = Poisson(μ)
     n_s = rand(Pλ, nSamples)

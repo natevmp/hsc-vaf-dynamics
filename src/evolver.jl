@@ -12,7 +12,7 @@ function evolveVAF(dfs::DFreqspace, params::Dict, t::Number; addClones::Bool=tru
     # Calculate frequency dependent move rate
     moveRate_f = ρ * N * (f->f*(1.0 - f)).(f_f)
 
-    fluxIn = N*μ*(ρ+ϕ/2)
+    fluxIn = N*2μ*(ρ+ϕ/2)
     # if mutation is turned of set incoming flux to 0
     !addClones ? fluxIn = 0 : nothing
 
@@ -40,7 +40,7 @@ function evolveVAF(dfs::DFreqspace, params::Dict, t::Number; addClones::Bool=tru
 end
 
 """Evolve fixed sized population with Moran dynamics as a diffusion PDE"""
-function evolveVAFfd(cfs::CFreqspace, params::Dict, t::Real; addClones::Bool=true)
+function evolveVAF(cfs::CFreqspace, params::Dict, t::Real; addClones::Bool=true)
     N = params["N"]
     μ = params["μ"]
     ρ = params["ρ"]
@@ -60,7 +60,7 @@ function evolveVAFfd(cfs::CFreqspace, params::Dict, t::Real; addClones::Bool=tru
     GD = Δ*BC
     L = GD*DiffEqArrayOperator(X)
 
-    fluxIn = N*μ*(ρ+ϕ/2)/dx
+    fluxIn = N*2μ*(ρ+ϕ/2)/dx
     c = spzeros(cfs.l-2)
     addClones ? c[freqInd1]=fluxIn : nothing
 
@@ -83,7 +83,7 @@ function evolveVAFfd(cfs::CFreqspace, params::Dict, t::Real; addClones::Bool=tru
 end
 
 """Evolve fixed sized population with Moran dynamics as a diffusion PDE"""
-function evolveVAFfd(vfs::VFreqspace, params::Dict, t::Real; addClones::Bool=true)
+function evolveVAF(vfs::VFreqspace, params::Dict, t::Real; addClones::Bool=true)
     N = params["N"]
     μ = params["μ"]
     ρ = params["ρ"]
@@ -101,7 +101,7 @@ function evolveVAFfd(vfs::VFreqspace, params::Dict, t::Real; addClones::Bool=tru
     GD = Δ*BC
     L = GD*DiffEqArrayOperator(X)
 
-    fluxIn = N*μ*(ρ+ϕ/2)/dx_i[1]
+    fluxIn = N*2μ*(ρ+ϕ/2)/dx_i[1]
     c = spzeros(inL)
     addClones ? c[freqInd1]=fluxIn : nothing
 
@@ -121,11 +121,6 @@ function evolveVAFfd(vfs::VFreqspace, params::Dict, t::Real; addClones::Bool=tru
 
     vfs.n_f[2:end-1] .= sol.u[end]
 
-end
-
-"""Evolve fixed sized population with Moran dynamics as a diffusion PDE"""
-function evolveVAFspec(cfs::CFreqspace, params::Dict, t::Real, dt::Float64; addClones::Bool=true)
-    nothing
 end
 
 
@@ -185,6 +180,95 @@ function evolveGrowingVAF(cfs::CFreqspace, par::Dict, t::Real, dt::Float64; addC
         end
     end
 
+
+end
+
+# ====================================================
+# ================ Alternate approach ================
+# ====================================================
+
+function evolveVAFev(dfs::DFreqspace, params::Dict, t::Real)
+    ρ = params["ρ"]
+    N = params["N"]
+    μ = params["μ"]
+    ϕ = params["ϕ"]
+    n_f = dfs.n_f
+    f_f = dfs.freqs_f
+
+    # Calculate frequency dependent move rate
+    moveRate_f = ρ * N * (f->f*(1.0 - f)).(f_f)
+
+    fluxIn = N*2μ*(ρ+ϕ/2)
+
+    function step!(dy_f, y_f, p, t)
+        # clone size probabilities
+        dy_f[1] = moveRate_f[2]*y_f[2]
+        for i in 2:N
+            dy_f[i] = -2moveRate_f[i]*y_f[i] +
+            moveRate_f[i-1]*y_f[i-1] +
+            moveRate_f[i+1]*y_f[i+1]
+        end
+        dy_f[N+1] = moveRate_f[N]*y_f[N]
+
+        # vaf expected values
+        dy_f[N+2:end] .= fluxIn * y_f[1:N+1]
+    end
+
+    p0_f = zeros(Float64, N+1)
+    p0_f[2] = 1
+    y0_f = vcat(p0_f, n_f)
+
+    prob = ODEProblem(step!, y0_f, (0.0, t))
+    alg = TRBDF2() #stablest for stiff PDE
+    # alg = KenCarp4() #stable for stiff PDE
+    # alg = Tsit5()
+    # alg = BS3()
+    sol = solve(prob, alg, save_everystep=false)
+    # sol = solve(prob, alg, save_everystep=false, dt=0.001)
+
+    dfs.n_f .= sol.u[2][N+2:end]
+
+end
+
+function evolveVAFvar(dfs::DFreqspace, params::Dict, t::Real)
+    ρ = params["ρ"]
+    N = params["N"]
+    μ = params["μ"]
+    ϕ = params["ϕ"]
+    nVar_f = dfs.n_f
+    f_f = dfs.freqs_f
+
+    # Calculate frequency dependent move rate
+    moveRate_f = ρ * N * (f->f*(1.0 - f)).(f_f)
+
+    fluxIn = N*2μ*(ρ+ϕ/2)
+    function step!(dy_f, y_f, p, t)
+        # clone size probabilities
+        dy_f[1] = moveRate_f[2]*y_f[2]
+        for i in 2:N
+            dy_f[i] = -2moveRate_f[i]*y_f[i] +
+            moveRate_f[i-1]*y_f[i-1] +
+            moveRate_f[i+1]*y_f[i+1]
+        end
+        dy_f[N+1] = moveRate_f[N]*y_f[N]
+
+        # vaf variances
+        dy_f[N+2:end] .= (fluxIn * y_f[1:N+1]) .+ (fluxIn*μ * y_f[1:N+1].^2)
+    end
+
+    p0_f = zeros(Float64, N+1)
+    p0_f[2] = 1
+    y0_f = vcat(p0_f, nVar_f)
+
+    prob = ODEProblem(step!, y0_f, (0.0, t))
+    alg = TRBDF2() #stablest for stiff PDE
+    # alg = KenCarp4() #stable for stiff PDE
+    # alg = Tsit5()
+    # alg = BS3()
+    sol = solve(prob, alg, save_everystep=false)
+    # sol = solve(prob, alg, save_everystep=false, dt=0.001)
+
+    dfs.n_f .= sol.u[2][N+2:end]
 
 end
 
@@ -318,4 +402,13 @@ end
 function evolveVAFfd(cfs::CFreqspace, params::Dict, t::Real, dt::Float64; addClones::Bool=true)
     # legacy func to allow dt parameter to be passed
     evolveVAFfd(cfs, params, t; addClones=addClones)
+end
+
+
+function evolveVAFfd(cfs::CFreqspace, params::Dict, t::Real; addClones::Bool=true)
+    evolveVAF(cfs, params, t; addClones=addClones)
+end
+
+function evolveVAFfd(vfs::VFreqspace, params::Dict, t::Real; addClones::Bool=true)
+    evolveVAF(vfs, params, t; addClones=addClones)
 end
