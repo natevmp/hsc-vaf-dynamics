@@ -38,7 +38,8 @@ function createVAFs()
         for (j,N) in enumerate(popSizes_N)
 
             if knownMu
-                λ = mutMean / (evoParams["μ"]*(2-p)*evoParams["t"])
+                # λ = mutMean / (evoParams["μ"]*(2-p)*evoParams["t"])
+                λ = 10.
             else
                 λ = mutMean^2/(mutVar - mutMean) / ( (2-p)*evoParams["t"] )
             end
@@ -58,6 +59,38 @@ function createVAFs()
 
     return vaf1_p_N
 end
+
+function checkMinmax(λ)
+
+    vaf1InOut_p_N = Array{Float64,2}(undef, 2, 2)
+    @showprogress for (i,p) in enumerate( [ pVals_p[1],pVals_p[end] ] )
+        for (j,N) in enumerate( [ popSizes_N[1],popSizes_N[end] ] )
+
+            evoParams["ρ"] = λ*(1-p)
+            evoParams["ϕ"] = λ*p
+            evoParams["N"] = N
+
+            vfs = VAFDyn.VFreqspace(evoParams["N"],1001)
+            VAFDyn.evolveVAFfd(vfs, evoParams, evoParams["t"]);
+            dfs = VAFDyn.makeDFSfromVFS(vfs, evoParams["N"])
+            dfsSampled = VAFDyn.sampler(dfs, evoParams["sampleSize"])
+
+            vaf1InOut_p_N[i,j] = dfsSampled.n_f[2]
+
+        end
+    end
+
+    return vaf1InOut_p_N
+end
+
+##
+
+vaf1InOut_p_N = checkMinmax(λ)
+display(vaf1InOut_p_N)
+vaf1InOutError_p_N = vaf1InOut_p_N .- vafData_f[2]
+display(vaf1InOutError_p_N)
+
+##
 
 function bestPars(vafError_p_N, NVals_N)
 
@@ -124,7 +157,7 @@ xlabel!("p (fraction of asymmetric divisions)")
 ylabel!("N")
 # title!("μ = 1.2")
 title!("error (number of variants at 1/S)")
-savefig("figures/ABCfitting/N-p_space_mu"*μString*".pdf")
+# savefig("figures/ABCfitting/N-p_space_mu"*μString*".pdf")
 display(fig)
 
 # fig2 = heatmap(pValsCont_p, NValsCont_N, transpose(vaf1ErrorInterpol_p_N),
@@ -159,7 +192,7 @@ xlabel!("p (fraction of asymmetric divisions)")
 ylabel!("N")
 title!("absolute value of error (number of variants at 1/S)")
 # title!("μ = 1.2")
-savefig("figures/ABCfitting/N-p_spaceAbs_mu"*μString*".pdf")
+# savefig("figures/ABCfitting/N-p_spaceAbs_mu"*μString*".pdf")
 display(fig)
 
 # fig2 = heatmap(pVals_p, popSizes_N, transpose(abs.(vaf1Error_p_N)))

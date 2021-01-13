@@ -1,7 +1,7 @@
 module BurdenDyn
 
 using Random, Distributions, DifferentialEquations
-export evolveBurden, evolveBurdenGrowth, logisticGrowth, exponentialCappedGrowth
+export evolveBurden, evolveBurdenGrowth, logisticGrowth, exponentialCappedGrowth, linearGrowth
 
 
 """ ODE evolve the mutational Burden
@@ -52,26 +52,28 @@ function evolveBurdenGrowth(params::Dict, evolveTime, mMax::Integer, ϵ::Real)
     λ = params["λ"]
     p = params["p"]
     μ = params["μ"]
-    Ni = params["N init"]
-    K = params["N max"]
+    Ni = params["N initial"]
+    K = params["N final"]
     r = params["growth rate"]
     ρ = λ*(1-p)
     ϕ = λ*p
 
-    γ(n, t) = r * ( 1 - n/K )   # rate of Poisson growth divisions
-    Nt(t) = K / ( 1 + (K-Ni)/Ni * exp(-r*t) )   # size of total population
-    # γ(n, t) = r   # exponential growth rate
+    # γ(n) = r * ( 1 - n/K )   # logistic growth rate
+    # Nt(t) = K / ( 1 + (K-Ni)/Ni * exp(-r*t) )   # logistic pop size
+    # γ(n) = r   # exponential growth rate
     # Nt(t) = Ni*exp(r*t)   # exponential pop size
-    # γ(n, t) = n<K ? r : 0   # exponential capped growth rate
-    # Nt(t) = Ni*exp(r*t)<K ? Ni*exp(r*t) : K     # exponential capped pop size
+    γ(n) = n<K ? r : 0   # exponential capped growth rate
+    Nt(t) = Ni*exp(r*t)<K ? Ni*exp(r*t) : K     # exponential capped pop size
+    # γ(n) = Ni*r/n   # linear growth rate
+    # Nt(t) = Ni * (1 + r*t)   # linear pop size
 
     probMuts_m, mutTh = mutationProbs(μ, ϵ)
     
     function step!(dn_m, n_m, p, t)
-        dn_m .= -( 2ρ+ϕ+γ(Nt(t),t) ) * n_m
+        dn_m .= -( 2ρ+ϕ+γ(Nt(t)) ) * n_m
         for m in 1:(mMax+1-mutTh)
             for k in 0:mutTh
-                dn_m[m+k] += ( 2ρ+ϕ+2*γ(Nt(t),t) ) * n_m[m] * probMuts_m[1+k]
+                dn_m[m+k] += ( 2ρ+ϕ+2*γ(Nt(t)) ) * n_m[m] * probMuts_m[1+k]
             end
         end
     end
@@ -102,15 +104,18 @@ function mutationProbs(μ, ϵ)
     end
     # vector of probabilities up until threshold
     probMuts_m = pdf.(Pμ, 0:mutTh)
-    println(probMutTh)
-    println(mutTh)
-    println(probMuts_m)
-    
+    # println(probMutTh)
+    # println(mutTh)
+    # println(probMuts_m)
     return probMuts_m, mutTh
 end
 
 function logisticGrowth(Ni, K, r, t)
     return K / ( 1 + (K-Ni)/Ni * exp(-r*t) )
+end
+
+function linearGrowth(Ni, r, t)
+    return Ni + Ni*r*t
 end
 
 function exponentialCappedGrowth(Ni, K, r, t)

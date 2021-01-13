@@ -6,7 +6,7 @@ using SparseArrays
 
 export birthDeathShort
 
-export birthDeathAlt
+export birthDeathAlt, birthDeathGrowth, birthDeathFixedGrowth
 
 
 """
@@ -180,8 +180,6 @@ function birthDeathLog(N, indStart, μ, p, Nbn, trec, r, d)
 	mutPrevs_loc = zeros(Int16, maxMuts)
 	mLive = 0
 	mFixed = 0
-
-
 	indLive = indStart
 	divExp = Exponential(1/(r*indLive))
 	t = 0
@@ -194,11 +192,8 @@ function birthDeathLog(N, indStart, μ, p, Nbn, trec, r, d)
 	vaf_n_t = zeros(Int64,N+1,size(trec)[1])
 
 	burdenB_m_t = zeros(Int(round(tmax*r*μ*N)),size(trec)[1])
-
 	burden_m_t = zeros(Int(round(tmax*r*μ*N)),size(trec)[1])
-
 	indLive_t = zeros(size(trec)[1])
-
 	mFixed_t = zeros(size(trec)[1])
 
 	depthmax_t = zeros(size(trec)[1])
@@ -256,9 +251,7 @@ function birthDeathLog(N, indStart, μ, p, Nbn, trec, r, d)
 			end
 		end
 
-
 		# clean up the gene by removing all mutations that can't change anymore
-
 		mLive, mFixed = cleanGenes!(muts_loc_cell, mutPrevs_loc, N, mLive, mFixed)
 
 		# dt = randexp()/(r*N)
@@ -539,7 +532,226 @@ function birthDeathLogLin(N, indStart, μ, p, lin, Nbn, trec, r, d)
 	return vaf_n_t, vafB_n_t, mFixed, mLive, indLive_t , burden_m_t, burdenB_m_t #, muts_loc_cell #, distanceB_m,distance_m
 end
 
+function logisticGrowthRate(n, r, K)
+	r * ( 1 - n/K )
+end
 
+function cappedExponentialGrowth(Ni, K, r, t)
+	return Ni*exp(r*t)<K ? Ni*exp(r*t) : K
+end
+
+function logisticGrowth(Ni, K, r, t)
+    return K / ( 1 + (K-Ni)/Ni * exp(-r*t) )
+end
+
+function birthDeathGrowth(params, tStop, tSaveStep)
+
+	Nin = params["N initial"]
+	Nf = params["N final"]
+	μ = params["μ"]
+	p = params["p"]
+	λ = params["λ"]
+	gR = params["growth rate"]
+	S = params["sample size"]
+
+	maxMuts = Integer(round(200*μ*Nf*(1-p/2)/(1-p)))
+	muts_loc_cell = falses(maxMuts, Nf)
+	# muts_loc_cell = sparse(falses(maxMuts, N))
+	mutPrevs_loc = zeros(Int16, maxMuts)
+	mLive = 0
+	mFixed = 0
+
+	γ(n) = logisticGrowthRate(n, gR, Nf)
+	dt(n) = rand(  Exponential( 1/( (λ+γ(n))*n ) )  )
+
+	tSaves_t = tSaveStep:tSaveStep:tStop
+	times_t = Float64[]
+	push!(times_t, 0.)
+	nLive_t = Int[]
+	push!(nLive_t, Nin)
+	
+	nLive = Nin
+	t = 0
+	t += dt(nLive)
+	# nSymDivs = 0
+	# nAsymDivs = 0
+
+	tCounter = 1
+	while t < tStop
+
+		pGrowth = γ(nLive)/(λ+γ(nLive))
+		pSym = λ*(1-p)/(λ+γ(nLive))
+		# pASym = λ*p/(λ+γ(nLive))
+
+		event = rand()
+		if event < pGrowth	# ===== growth =====
+			# choose individual cell for symmetric division
+			divCID = rand(1:nLive)
+			nLive += 1
+			newCID = nLive
+			# add copy of self-renewing cell ID to mutation matrix
+			muts_loc_cell[:, newCID] = muts_loc_cell[:, divCID]
+			mutPrevs_loc += muts_loc_cell[:, newCID]
+			# randomly mutate daughters with on average μ mutations
+			mLive += mutateCell!(muts_loc_cell, mutPrevs_loc, mLive, divCID, μ)
+			mLive += mutateCell!(muts_loc_cell, mutPrevs_loc, mLive, newCID, μ)
+		elseif event < (pGrowth + pSym)	# ===== Moran symmetric divisions =====
+			# choose individual cells for differentiation/self-renewal
+			diffCID = rand(1:nLive)
+			selfrCID = rand(1:nLive)
+			# remove differentiating cell from prevalence vector
+			mutPrevs_loc -= muts_loc_cell[:, diffCID]
+			# replace differentiating cell ID with copy of self-renewing cell ID
+			muts_loc_cell[:, diffCID] = muts_loc_cell[:, selfrCID]
+			# add copy of self-renewing cell ID to prevalence vector
+			mutPrevs_loc += muts_loc_cell[:, selfrCID]
+			# randomly mutate daughters with on average μ mutations
+			mLive += mutateCell!(muts_loc_cell, mutPrevs_loc, mLive, selfrCID, μ)
+			mLive += mutateCell!(muts_loc_cell, mutPrevs_loc, mLive, diffCID, μ)
+			# nSymDivs += 1
+		else	# ===== asymmetric division =====
+			# choose individual cell for asymmetric division
+			divCID = rand(1:nLive)
+			# randomly mutate daughter with on average μ mutations
+			mLive += mutateCell!(muts_loc_cell, mutPrevs_loc, mLive, divCID, μ)
+			# nAsymDivs += 1
+		end
+
+		# clean up the gene by removing all mutations that can't change anymore
+		# mLive, mFixed = cleanGenes!(muts_loc_cell, mutPrevs_loc, nLive, mLive, mFixed)
+
+		t += dt(nLive)
+
+		if t>tSaves_t[tCounter]
+			push!(nLive_t, nLive)
+			push!(times_t, t)
+			tCounter += 1
+		end
+	end
+
+	# after simulation, record VAF before and after bottleneck
+	bottleneck_inds = randperm(Nf)[1:S]
+	burdenB_m = burdencalc(muts_loc_cell[:, bottleneck_inds], S, mLive)
+	burden_m = burdencalc(muts_loc_cell, nLive, mLive)
+
+	vafB_n = VAFcalc(muts_loc_cell[:, bottleneck_inds], S, mLive)
+	vaf_n = VAFcalc(muts_loc_cell, Nf, mLive)
+
+	return times_t, nLive_t, vaf_n, vafB_n, burden_m, burdenB_m
+end
+
+function birthDeathFixedGrowth(params, tStop, tSaveStep)
+
+	Nin = params["N initial"]
+	Nf = params["N final"]
+	μ = params["μ"]
+	p = params["p"]
+	λ = params["λ"]
+	gR = params["growth rate"]
+	S = params["sample size"]
+
+	# maxMuts = Integer(round(200*μ*Nf*(1-p/2)/(1-p)))
+	maxMuts = Integer(round(2*μ*λ*Nf*tStop))
+	muts_loc_cell = falses(maxMuts, Nf)
+	# muts_loc_cell = sparse(falses(maxMuts, Nf))
+	mutPrevs_loc = zeros(Int16, maxMuts)
+	mLive = 0
+	mFixed = 0
+
+	# γ(n) = logisticGrowthRate(n, gR, Nf)
+	# nTime(tt) = logisticGrowth(Nin, Nf, gR, tt)
+	nTime(tt) = cappedExponentialGrowth(Nin, Nf, gR, tt)
+
+	dt(n) = rand(  Exponential( 1/(λ*n) )  )
+
+	tSaves_t = tSaveStep:tSaveStep:tStop
+	times_t = Float64[]
+	push!(times_t, 0.)
+	nLive_t = Int[]
+	push!(nLive_t, Nin)
+	
+	nLive = Nin
+	t = 0
+	t += dt(nLive)
+	# nSymDivs = 0
+	# nAsymDivs = 0
+	tCounter = 1
+	while t < tStop
+
+		# ===== growth =====
+		if round(nTime(t)) > nLive
+			for i in round(nTime(t)) - nLive
+				# choose individual cell for symmetric division
+				divCID = rand(1:nLive)
+				# increase population
+				nLive += 1
+				newCID = nLive
+				# add copy of self-renewing cell ID to mutation matrix
+				muts_loc_cell[:, newCID] = muts_loc_cell[:, divCID]
+				mutPrevs_loc += muts_loc_cell[:, newCID]
+				# randomly mutate daughters with on average μ mutations
+				mLive += mutateCell!(muts_loc_cell, mutPrevs_loc, mLive, divCID, μ)
+				mLive += mutateCell!(muts_loc_cell, mutPrevs_loc, mLive, newCID, μ)
+			end
+		end
+
+		# ===== Poisson events =====
+		event = rand()
+		if event < 1-p	# ===== Moran symmetric divisions =====
+			# choose individual cells for differentiation/self-renewal
+			diffCID = rand(1:nLive)
+			selfrCID = rand(1:nLive)
+			# remove differentiating cell from prevalence vector
+			mutPrevs_loc -= muts_loc_cell[:, diffCID]
+			# replace differentiating cell ID with copy of self-renewing cell ID
+			muts_loc_cell[:, diffCID] = muts_loc_cell[:, selfrCID]
+			# add copy of self-renewing cell ID to prevalence vector
+			mutPrevs_loc += muts_loc_cell[:, selfrCID]
+			# randomly mutate daughters with on average μ mutations
+			mLive += mutateCell!(muts_loc_cell, mutPrevs_loc, mLive, selfrCID, μ)
+			mLive += mutateCell!(muts_loc_cell, mutPrevs_loc, mLive, diffCID, μ)
+			# nSymDivs += 1
+		else	# ===== asymmetric division =====
+			# choose individual cell for asymmetric division
+			divCID = rand(1:nLive)
+			# randomly mutate daughter with on average μ mutations
+			mLive += mutateCell!(muts_loc_cell, mutPrevs_loc, mLive, divCID, μ)
+			# nAsymDivs += 1
+		end
+
+		# clean up the gene by removing all mutations that can't change anymore
+		mLive, mFixed = cleanGenes!(muts_loc_cell, mutPrevs_loc, nLive, mLive, mFixed)
+
+		t += dt(nLive)
+
+		if t>tSaves_t[tCounter]
+			push!(nLive_t, nLive)
+			push!(times_t, t)
+			tCounter += 1
+		end
+	end
+
+	# after simulation, record VAF before and after bottleneck
+	bottleneck_inds = randperm(nLive)[1:S]
+	burdenB_m = burdencalc(muts_loc_cell[:, bottleneck_inds], S, mLive)
+	burden_m = burdencalc(muts_loc_cell, nLive, mLive)
+
+	vafB_n = VAFcalc(muts_loc_cell[:, bottleneck_inds], S, mLive)
+	vaf_n = VAFcalc(muts_loc_cell, Nf, mLive)
+
+	return times_t, nLive_t, vaf_n, vafB_n, burden_m, burdenB_m
+end
+
+function mutateCell!(muts_loc_cell, mutPrevs_loc, mLive, cellCID, μ)
+	nMuts = rand(Poisson(μ))
+	if nMuts > 0
+		for i = 1:nMuts
+			muts_loc_cell[mLive+i, cellCID] = true
+			mutPrevs_loc[mLive+i] += 1
+		end
+	end
+	return nMuts
+end
 
 """
 Remove mutations that already died out or fixated.

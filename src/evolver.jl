@@ -148,7 +148,7 @@ function fpOp(p::Array{T}, a::Array{T}, b::Array{T}, dx::Float64) where T
 end
 
 """Evolve growing populations with Moran and pure birth dynamics"""
-function evolveGrowingVAF(cfs::CFreqspace, par::Dict, t::Real, dt::Float64; addClones::Bool=true)
+function evolveGrowingVAF(vfs::VFreqspace, par::Dict, t::Real, dt::Float64; addClones::Bool=true)
     #event rates
     ρ = par["ρ"]
     γ = par["γ"]
@@ -160,10 +160,10 @@ function evolveGrowingVAF(cfs::CFreqspace, par::Dict, t::Real, dt::Float64; addC
     l = length(n_f)
     nC_f = zeros(l)
     arg_f = zeros(l)
-    x_f = cfs.freqs_f
+    x_f = vfs.freqs_f
     a_f = zeros(l)
     b_f = zeros(l)
-    n = N0
+    # n = N0
 
     bFP(x, n) = n*( 2ρ/(n^2) + γ/(n+1)^2 )*x*(1-x)
 
@@ -179,8 +179,7 @@ function evolveGrowingVAF(cfs::CFreqspace, par::Dict, t::Real, dt::Float64; addC
             cfs.n_f[freqToInd(1/n, cfs.df)] += 2*(ρ + γ)*n*μ*dt * 1/cfs.df
         end
     end
-
-
+    
 end
 
 # ====================================================
