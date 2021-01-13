@@ -709,7 +709,9 @@ function birthDeathFixedGrowth(params, tStop, tSaveStep)
 			mutPrevs_loc += muts_loc_cell[:, selfrCID]
 			# randomly mutate daughters with on average μ mutations
 			mLive += mutateCell!(muts_loc_cell, mutPrevs_loc, mLive, selfrCID, μ)
-			mLive += mutateCell!(muts_loc_cell, mutPrevs_loc, mLive, diffCID, μ)
+			if diffCID != selfr(CID)
+				mLive += mutateCell!(muts_loc_cell, mutPrevs_loc, mLive, diffCID, μ)
+			end
 			# nSymDivs += 1
 		else	# ===== asymmetric division =====
 			# choose individual cell for asymmetric division
@@ -722,7 +724,7 @@ function birthDeathFixedGrowth(params, tStop, tSaveStep)
 		# clean up the gene by removing all mutations that can't change anymore
 		mLive, mFixed = cleanGenes!(muts_loc_cell, mutPrevs_loc, nLive, mLive, mFixed)
 
-		t += dt(nLive)
+		t += dt(nLive)	# should this be moved up, before Poisson events but after Growth?
 
 		if t>tSaves_t[tCounter]
 			push!(nLive_t, nLive)
