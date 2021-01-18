@@ -133,7 +133,8 @@ function ABC(VAF,esize,osize,cnumber,limit,maxsteps)
 
     C_solution = time_solution[argmax(fitness)]  / n
 
+    vafSol = dfs_fit.n_f
 
 
-    return time_solution[argmax(fitness)],mu_est
+    return time_solution[argmax(fitness)],mu_est,vafSol
 end

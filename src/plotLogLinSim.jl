@@ -5,8 +5,6 @@ using Statistics
 
 include("compoundPoisson.jl")
 
-##Script to run the simulation of neutrally evolving populations
-
 # tmax is the amount of time that the simulation takes
 tmax = 50
 #r is the rate at which replication events happen per individual

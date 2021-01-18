@@ -35,18 +35,49 @@ burden_prev = zeros(Float64,2000)
 
 x1 = -100:100
 
-spread = Normal(0,10)
+#spread = Normal(0,10)
 
 for k = 1:n
-	burden_prev[burden_ind[k].+x1] .+= pdf.(spread, x1)
+	burden_prev[burden_ind[k]+1] += 1 #pdf.(spread, x1)
 end
+#=
+muEst = (var(burden_ind)-mean(burden_ind))/mean(burden_ind)
 
-normapprox_prev = Normal(mean(burden_ind),sqrt(mean(burden_ind)*(n-1)/n))
+cellDivEst = mean(burden_ind)^2/(var(burden_ind)-mean(burden_ind))
 
-normapproxemp_prev = Normal(mean(burden_ind),sqrt(var(burden_ind)))
+tFEst,muFEst,vafF = ABC(vaf_n,10,10,100,20,1000)
+
+# calculate an estimated N and time based on the known mu value
+NEst = n*muFEst/muEst
+tEst = (muFEst/muEst)^2*tFEst
+
+t = 10
+=#
+#x = (1:n)
+#y1 = vaf_n[x.+1]
+x = 1 ./ (n:-1:1)
+y1 = vaf_n[(n+1):-1:2]
+#y2 = vafF[(n+1):-1:2]
+
+plot(x,y1 ./ y1[n],seriestype = :scatter,label = "data VAF",legend=:topleft,xlims=(0,1.05),ylims=(-0.05,1.05))
+#plot!(x,y2 ./ y2[n],label = "ABC derived VAF")
+plot!(x,x,label = "1/x")
+
+title!(string("Blood Stem Cell Data VAF"))
+xlabel!("frequency")
+ylabel!("relative M")
 
 
-x = 500:1500
+fig_name = string("../Figures/Presentation/VAFPresdata")
+
+savefig(fig_name)
+
+#normapprox_prev = Normal(mean(burden_ind),sqrt(mean(burden_ind)*(n-1)/n))
+
+#normapproxemp_prev = Normal(mean(burden_ind),sqrt(var(burden_ind)))
+
+
+#x = 500:1500
 #=
 plot(x,pdf.(normapprox_prev, x),label="model-based approximation")
 plot!(x,pdf.(normapproxemp_prev, x), label="empiric approximation")
@@ -67,7 +98,7 @@ savefig(fig_name)
 #dfs_fit = VAFDyn.DFreqspace(params_fit["N"])
 
 #VAFDyn.evolveVAF(dfs_fit, params_fit, t_bn/n, 1/(100*n))
-
+#=
 plot(1:n,VAF[2:end],label="Experiment",legend=:topleft,dpi=300)
 #plot!(1:n,dfs_fit.n_f[2:end].*mu_bn,label="ABC solution")
 
@@ -78,3 +109,4 @@ ylabel!("Number of mutations")
 fig_name = string("../Figures/experiment/VAF")
 
 savefig(fig_name)
+=#

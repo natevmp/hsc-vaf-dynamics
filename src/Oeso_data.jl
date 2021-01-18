@@ -51,8 +51,8 @@ for k = 1:9
 
 	end
 
-	x = n./(49:-1:1).-1
-	y = vafdata_n[50:-1:2]/samples[k]
+	x = n./(49:-1:2).-1
+	y = vafdata_n[50:-1:3]/samples[k]
 
 	#scatter(x,y,label="Experiment",legend=:topleft,dpi=300, yaxis =:log, ylims=(10^-1,10^3))
 	#plot!(1:n,dfs_fit.n_f[2:end].*mu_bn,label="ABC solution")
@@ -79,15 +79,19 @@ for k = 1:9
 
 	cor1f[k] = cor( fit , y )
 	#cor1f2[k] = cor( (1 ./ (1:100).^2) , (vafM_n_t[2:101,k]./vafM_n_t[2,k]) )
+	plot(x,x ./ x[48],label ="1/x")
+	plot!(x, y ./ y[48],label="data",seriestype = :scatter, legend=:topleft)
 
-	#plot!(x,fit,label="fit",legend=:topleft)
+	title!(string("Mutation Rate vs Age"))
+	xlabel!("inverted frequency")
+	ylabel!("relative M")
 
-	#fig_name = string("../Figures/oeso/vaf9")
+	fig_name = string("../Figures/oeso/vaf_", k)
 
-	#savefig(fig_name)
+	savefig(fig_name)
 
 end
-
+#=
 agesnorm = ages .- mean(ages)
 anorm = a .- mean(a)
 
@@ -160,3 +164,4 @@ ylabel!("cor/R^2")
 fig_name = string("../Figures/oeso/cor")
 
 savefig(fig_name)
+=#

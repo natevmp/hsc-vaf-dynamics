@@ -201,10 +201,10 @@ function birthDeathLog(N, indStart, μ, p, Nbn, trec, r, d)
 
 	mFixed_t = zeros(size(trec)[1])
 
-	depthmax_t = zeros(size(trec)[1])
-	depthmaxB_t = zeros(size(trec)[1])
-	depthmean_t = zeros(size(trec)[1])
-	depthmeanB_t = zeros(size(trec)[1])
+	#depthmax_t = zeros(size(trec)[1])
+	#depthmaxB_t = zeros(size(trec)[1])
+	#depthmean_t = zeros(size(trec)[1])
+	#depthmeanB_t = zeros(size(trec)[1])
 
 	while t < tmax
 		#println(t)
@@ -276,19 +276,19 @@ function birthDeathLog(N, indStart, μ, p, Nbn, trec, r, d)
 			indLive_t[k] = indLive
 			mFixed_t[k] = mFixed
 
-			inc_parent_off = VAFSim.inclusion(muts_loc_cell,N,mLive)
-			incB_parent_off = VAFSim.inclusion(muts_loc_cell[:, bottleneck_inds],Nbn,mLive)
+			#inc_parent_off = VAFSim.inclusion(muts_loc_cell,N,mLive)
+			#incB_parent_off = VAFSim.inclusion(muts_loc_cell[:, bottleneck_inds],Nbn,mLive)
 
-			depthmax_t[k] = maximum(sum(inc_parent_off,dims=1))
-			depthmaxB_t[k] = maximum(sum(incB_parent_off,dims=1))
-			depthmean_t[k] = mean(sum(inc_parent_off,dims=1))
-			depthmeanB_t[k] = mean(sum(incB_parent_off,dims=1))
+			#depthmax_t[k] = maximum(sum(inc_parent_off,dims=1))
+			#depthmaxB_t[k] = maximum(sum(incB_parent_off,dims=1))
+			#depthmean_t[k] = mean(sum(inc_parent_off,dims=1))
+			#depthmeanB_t[k] = mean(sum(incB_parent_off,dims=1))
 
 			k += 1
 		end
 	end
 
-	return vaf_n_t, vafB_n_t, mFixed_t, mLive, indLive_t , burden_m_t, burdenB_m_t, depthmax_t, depthmaxB_t, depthmean_t, depthmeanB_t #, muts_loc_cell #, distanceB_m,distance_m
+	return vaf_n_t, vafB_n_t, mFixed_t, mLive, indLive_t , burden_m_t, burdenB_m_t #, depthmax_t, depthmaxB_t, depthmean_t, depthmeanB_t #, muts_loc_cell #, distanceB_m,distance_m
 end
 
 function birthDeathLogC(N, indStart, μ, C, Nbn, trec, r, d)
@@ -407,6 +407,136 @@ function birthDeathLogC(N, indStart, μ, C, Nbn, trec, r, d)
 	#vaf_n = VAFcalc(muts_loc_cell, indLive, mLive)
 
 	return vaf_n_t, vafB_n_t, mFixed, mLive, indLive_t #, burden_m, burdenB_m,muts_loc_cell #, distanceB_m,distance_m
+end
+
+function birthDeathOpt(N, indStart, μ, p, lin, Nbn, trec, r, d)
+
+	tmax = trec[end]
+	maxMuts = Integer(round(200*μ*N*(1-p/2)/(1-p)))
+	muts_loc_cell = falses(maxMuts, N*5)
+	# muts_loc_cell = sparse(falses(maxMuts, N))
+	mutPrevs_loc = zeros(Int16, maxMuts)
+	mLive = 0
+	mFixed = 0
+
+
+	indLive = indStart
+	divExp = Exponential(1/(r*indLive))
+	t = 0
+	# dt = randexp()/(r*N)
+	dt = rand(divExp)
+	t += dt
+	k = 1
+
+	vafB_n_t = zeros(Int64,Nbn+1,size(trec)[1])
+	vaf_n_t = zeros(Int64,N*5,size(trec)[1])
+
+	burdenB_m_t = zeros(Int(round(tmax*r*μ*N)),size(trec)[1])
+
+    burden_m_t = zeros(Int(round(tmax*r*μ*N)),size(trec)[1])
+
+	indLive_t = zeros(size(trec)[1])
+
+	mFixed_t = zeros(size(trec)[1])
+
+
+	while t < tmax
+		#println(t)
+		#println(indLive)
+		q = (1-indLive/N)./d
+		if q < lin
+			q = lin
+		end
+
+		h = 0
+		# choose individual cells for death/birth
+		deathCID = rand(1:indLive)
+		# symmetric replication event inside if-loop
+
+		if rand()<p
+
+		elseif rand()<q
+			birthCID = rand(1:indLive)
+			indLive += 1
+			deathCID = indLive
+			h = 1
+		elseif rand()>p
+			birthCID = deathCID
+			while birthCID==deathCID
+				birthCID = rand(1:indLive)
+			end
+			h = 1
+
+		end
+
+		if h==1
+			# kill dying cell and replace with copy of dividing cell
+			mutPrevs_loc -= muts_loc_cell[:, deathCID]
+			mutPrevs_loc += muts_loc_cell[:, birthCID]
+			muts_loc_cell[:, deathCID] = muts_loc_cell[:, birthCID]
+
+			# randomly mutate new individual with on average μ mutations
+
+			nMuts = rand(Poisson(μ))
+			if nMuts > 0
+				for i = 1:nMuts
+					mLive += 1
+					muts_loc_cell[mLive, birthCID] = true
+					mutPrevs_loc[mLive] += 1
+				end
+			end
+
+		end
+		# asymmetric replication events are equivalent to only mutations happening
+		# in a single cell
+		nMuts = rand(Poisson(μ))
+		if nMuts > 0
+			for i = 1:nMuts
+				mLive += 1
+				muts_loc_cell[mLive, deathCID] = true
+				mutPrevs_loc[mLive] += 1
+			end
+		end
+
+
+		# clean up the gene by removing all mutations that can't change anymore
+
+		mLive, mFixed = cleanGenes!(muts_loc_cell, mutPrevs_loc, N, mLive, mFixed)
+
+		# dt = randexp()/(r*N)
+		rc = N/indLive
+		divExp = Exponential(1/(rc*indLive))
+		dt = rand(divExp)
+		t += dt
+
+		if t > trec[k]
+			bottleneck_inds = randperm(indLive)[1:Nbn]
+			#println(VAFcalc(muts_loc_cell[:, bottleneck_inds], Nbn, mLive))
+			vafB_n_t[:,k] = VAFcalc(muts_loc_cell[:, bottleneck_inds], Nbn, mLive)
+			vaf_n_t[1:indLive+1,k] = VAFcalc(muts_loc_cell, indLive, mLive)
+			burdenB_m_t[1+mFixed:mLive+1+mFixed,k] = burdencalc(muts_loc_cell[:, bottleneck_inds], Nbn, mLive)
+			burden_m_t[1+mFixed:mLive+1+mFixed,k] = burdencalc(muts_loc_cell, indLive, mLive)
+			indLive_t[k] = indLive
+			mFixed_t[k] = mFixed
+
+			k += 1
+		end
+	end
+
+
+
+	# after simulation, record VAF before and after bottleneck
+	#bottleneck_inds = randperm(indLive)[1:Nbn]
+	#burdenB_m = burdencalc(muts_loc_cell[:, bottleneck_inds], Nbn, mLive)
+	#burden_m = burdencalc(muts_loc_cell, indLive, mLive)
+
+	#distanceB_m = createtree(muts_loc_cell[:, bottleneck_inds], Nbn, mLive)
+	#distance_m = createtree(muts_loc_cell, N, mLive)
+
+	#vafB_n = VAFcalc(muts_loc_cell[:, bottleneck_inds], Nbn, mLive)
+	#vaf_n = VAFcalc(muts_loc_cell, indLive, mLive)
+
+	return vaf_n_t, vafB_n_t, mFixed_t, mLive, indLive_t , burden_m_t, burdenB_m_t #, muts_loc_cell #, distanceB_m,distance_m
 end
 
 function birthDeathLogLin(N, indStart, μ, p, lin, Nbn, trec, r, d)
@@ -536,10 +666,8 @@ function birthDeathLogLin(N, indStart, μ, p, lin, Nbn, trec, r, d)
 	#vafB_n = VAFcalc(muts_loc_cell[:, bottleneck_inds], Nbn, mLive)
 	#vaf_n = VAFcalc(muts_loc_cell, indLive, mLive)
 
-	return vaf_n_t, vafB_n_t, mFixed, mLive, indLive_t , burden_m_t, burdenB_m_t #, muts_loc_cell #, distanceB_m,distance_m
+	return vaf_n_t, vafB_n_t, mFixed_t, mLive, indLive_t , burden_m_t, burdenB_m_t #, muts_loc_cell #, distanceB_m,distance_m
 end
-
-
 
 """
 Remove mutations that already died out or fixated.
