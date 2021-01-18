@@ -2,7 +2,7 @@ module VAFDyn
 
 export DFreqspace, CFreqspace, VFreqspace
 
-using StaticArrays, HypergeometricFunctions, Distributions
+using StaticArrays, HypergeometricFunctions, Distributions, Dierckx
 using DiffEqOperators, OrdinaryDiffEq, SparseArrays, LinearAlgebra
 # using PyCall
 # scp = pyimport("scipy.special")

@@ -3,7 +3,7 @@ include("../src/vafdyn.jl")
 
 
 using .VAFDyn
-using Plots, JLD
+using Plots
 gr()
 
 println("starting")
@@ -69,11 +69,11 @@ end
 # title!("Discrete Freqspace")
 # display(h)
 
-sampledfs = VAFDyn.sampler(dfs, 80)
+# sampledfs = VAFDyn.sampler(dfs, 80)
 
 # plot!(h, sampledfs.freqs_f[2:end], sampledfs.n_f[2:end], label="sampled", yaxis=:log10)
 # display(h)
 
 # savefig("figures/VAF_400HSC_59y.png")
 
-save("vafTest.jld", "params", params, "sampledfs", sampledfs, "evolveTime", evolveTime, "dfs", dfs)
+# save("vafTest.jld", "params", params, "sampledfs", sampledfs, "evolveTime", evolveTime, "dfs", dfs)
