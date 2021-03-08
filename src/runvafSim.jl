@@ -12,22 +12,22 @@ r = 1
 d = 1
 d_all = 2^0
 # n is the number of individuals
-N = 2000
+N = 100
 indStart = 100
 #N_all = 100
 # bsize is the size of the population at the bottleneck
-Nbn = 100
+Nbn = 10
 # mu is the mutation rate
 μ = 1
 #μ_all = 0.5:0.5:2
 # runs is the number of simulations to average over
-runs = 1
+runs = 100
 # p is the likelihood of self-replacement
 p = 0
 # C is the number of somatic cells the population is supposed to produce per time step
 #C = 0
 # lin is the linear growth rate of the population
-lin = 0 #1*round(10^(-3),digits=4)
+lin = 1*round(10^(-3),digits=4)
 #lin_all = 0.001:0.001:0.005
 
 #trec = 1:1:10
@@ -43,6 +43,9 @@ lin = 0 #1*round(10^(-3),digits=4)
     burdenBM_m_t = zeros(Int(round(tmax*r*μ*N)),size(trec)[1])
 
     burdenM_m_t = zeros(Int(round(tmax*r*μ*N)),size(trec)[1])
+
+	burdenVar_t_run = zeros(size(trec)[1],runs)
+	burdenMean_t_run = zeros(size(trec)[1],runs)
 
     #mLiveDist = zeros(Int(round(N*μ*100)))
 
@@ -68,6 +71,28 @@ lin = 0 #1*round(10^(-3),digits=4)
     for run = 1:runs
 
         vaf_n_t, vafB_n_t, mFixed_t, mLive, indLive_t , burden_m_t, burdenB_m_t = VAFSim.birthDeathLogLin(N, indStart, μ, p, lin, Nbn, trec, r, d)
+
+		bmean_t = zeros(size(trec)[1])
+		for k = 1:Int(round(tmax*r*μ*N))
+		    bmean_t .+= k*(burden_m_t[k,:])
+		end
+
+		bmean_t = bmean_t ./ indLive_t #.- mFixed_t_run
+
+
+
+		bvar_t = zeros(size(trec)[1])
+
+		for k = 1:Int(round(tmax*r*μ*N))
+		    bvar_t .+= (burden_m_t[k,:]*(k)^2)
+		end
+
+		bvar_t = bvar_t ./ indLive_t .- bmean_t.^2
+
+		bmeanCor_t = bmean_t .- mFixed_t
+
+		burdenVar_t_run[:,run] = bvar_t
+		burdenMean_t_run[:,run] = bmeanCor_t
 
         #burdenB_m .+= mFixedM
         #burden_m .+= mFixedM
@@ -97,6 +122,6 @@ lin = 0 #1*round(10^(-3),digits=4)
 
     data_name = string("../data/bottleneck/dataBDburdenlin", "_N", N, "_mu", μ, "_lin", lin,"_Nbn", Nbn, "_t", tmax, "_r", r,"_d", d, ".jld2")
 
-    @save data_name vafM_n_t vafBM_n_t indLiveM_t trec mFixedM_t burdenM_m_t burdenBM_m_t #depthmaxM_t depthmaxBM_t depthmeanM_t depthmeanBM_t #distanceM_m distanceBM_m mLiveDist
+    @save data_name vafM_n_t vafBM_n_t indLiveM_t trec mFixedM_t burdenM_m_t burdenBM_m_t burdenVar_t_run burdenMean_t_run #depthmaxM_t depthmaxBM_t depthmeanM_t depthmeanBM_t #distanceM_m distanceBM_m mLiveDist
 
 #end

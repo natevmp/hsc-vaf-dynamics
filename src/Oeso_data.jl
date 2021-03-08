@@ -1,6 +1,6 @@
 using JLD2
 
-include("ABC.jl")
+#include("ABC.jl")
 
 using Plots
 
@@ -54,6 +54,7 @@ for k = 1:9
 	x = n./(49:-1:2).-1
 	y = vafdata_n[50:-1:3]/samples[k]
 
+
 	#scatter(x,y,label="Experiment",legend=:topleft,dpi=300, yaxis =:log, ylims=(10^-1,10^3))
 	#plot!(1:n,dfs_fit.n_f[2:end].*mu_bn,label="ABC solution")
 	xnorm = x .- mean(x)
@@ -79,14 +80,31 @@ for k = 1:9
 
 	cor1f[k] = cor( fit , y )
 	#cor1f2[k] = cor( (1 ./ (1:100).^2) , (vafM_n_t[2:101,k]./vafM_n_t[2,k]) )
-	plot(x,x ./ x[48],label ="1/x")
-	plot!(x, y ./ y[48],label="data",seriestype = :scatter, legend=:topleft)
+	n = 20
+	xplot = (2:1:n-1) ./ 200
+	yplot = vafdata_n[3:1:n] ./ vafdata_n[3]
 
-	title!(string("Mutation Rate vs Age"))
-	xlabel!("inverted frequency")
+	x1 = 1 ./ (n .* xplot)
+	x1 = x1 ./ x1[1]
+
+	x2 = 1 ./ (n .* xplot).^2
+	x2 = x2 ./ x2[1]
+
+	x15 = 2 ./ ( (n .* xplot).^ 2 + n .* xplot)
+	x15 = x15 ./ x15[1]
+
+	col = 1 .- ages[k] ./ ages[9]
+
+	plot(xplot,x1,label ="1/x", color =:darkgreen)
+	plot!(xplot ,x2, label = "1/x^2", color =:green1)
+	plot!(xplot ,x15, label = string("2/f - 2/(f+1)"), color =:green)
+	plot!(xplot, yplot,label="data",seriestype = :scatter, legend=:topright,color = RGBA(col,col,col))
+
+	title!(string("VAF Age = ", ages[k]))
+	xlabel!("frequency")
 	ylabel!("relative M")
 
-	fig_name = string("../Figures/oeso/vaf_", k)
+	fig_name = string("../Figures/oeso/vaf_", k,".pdf")
 
 	savefig(fig_name)
 
