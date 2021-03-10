@@ -2,6 +2,8 @@ module CompoundPoisson
 
 using Random, Distributions
 
+export randComPois
+
 """
 Draw samples from the compound Poisson distribution with Poisson distributed elements.
 λ           Poisson parameter for distribution of sum length
