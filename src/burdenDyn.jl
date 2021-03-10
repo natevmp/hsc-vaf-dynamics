@@ -44,10 +44,13 @@ end
 """ ODE evolve the mutational Burden in a growing population
 params          parameter values
 evolveTime      time to evolve system
-nMax            maximum number of mutations to allow
+nMax            maximum number of mutations to allow per cell
 ϵ               threshold for minimal probability to account for number of new mutations per division
 """
-function evolveBurdenGrowth(params::Dict, evolveTime, mMax::Integer, ϵ::Real)
+function evolveBurdenGrowth(params::Dict, evolveTime; 
+    mMax::Union{Integer,Nothing}=nothing, 
+    ϵ::Real=0.0001,
+    growthType::String="cappedExponential")
 
     λ = params["λ"]
     p = params["p"]
@@ -67,13 +70,37 @@ function evolveBurdenGrowth(params::Dict, evolveTime, mMax::Integer, ϵ::Real)
     # γ(n) = Ni*r/n   # linear growth rate
     # Nt(t) = Ni * (1 + r*t)   # linear pop size
 
+    # γ(n) = n<K ? params["exp growth rate"] : K*params["lin growth rate"]/n
+    # Nt(t) = exponentialToLinearGrowth(Ni, K, params["exp growth rate"], params["lin growth rate"], t)
+
+    # function setGrowthType()
+    #     if growthType=="cappedExponential"
+    #         println("growth type: capped exp")
+    #         γ(n) = n<K ? r : 0   # exponential capped growth rate
+    #         Nt(t) = Ni*exp(r*t)<K ? Ni*exp(r*t) : K     # exponential capped pop size
+    #         return γ, Nt
+    #     elseif growthType=="exponentialToLinear"
+    #         println("growth type: exp to lin")
+    #         γ(n) = n<K ? params["exp growth rate"] : K*params["lin growth rate"]/n
+    #         Nt(t) = exponentialToLinearGrowth(Ni, K, params["exp growth rate"], params["lin growth rate"], t)
+    #         return γ, Nt
+    #     else
+    #         println("error: growth type not set")
+    #     end
+    # end
+    # γ, Nt = setGrowthType()
+
+    if isnothing(mMax)
+        mMax = Int(round(2*λ*evolveTime*μ*3))
+    end
+    
     probMuts_m, mutTh = mutationProbs(μ, ϵ)
     
     function step!(dn_m, n_m, p, t)
-        dn_m .= -( 2ρ+ϕ+γ(Nt(t)) ) * n_m
+        dn_m .= -( ρ*(2-1/Nt(t))+ϕ+γ(Nt(t)) ) * n_m
         for m in 1:(mMax+1-mutTh)
             for k in 0:mutTh
-                dn_m[m+k] += ( 2ρ+ϕ+2*γ(Nt(t)) ) * n_m[m] * probMuts_m[1+k]
+                dn_m[m+k] += ( ρ*(2-1/Nt(t))+ϕ+2*γ(Nt(t)) ) * n_m[m] * probMuts_m[1+k]
             end
         end
     end
@@ -114,14 +141,18 @@ function logisticGrowth(Ni, K, r, t)
     return K / ( 1 + (K-Ni)/Ni * exp(-r*t) )
 end
 
-function linearGrowth(Ni, r, t)
-    return Ni + Ni*r*t
-end
+exponentialGrowth(Ni, r, t) = Ni*exp(r*t)
+linearGrowth(Ni, r, t) = Ni + Ni*r*t
 
 function exponentialCappedGrowth(Ni, K, r, t)
     return Ni*exp(r*t)<K ? Ni*exp(r*t) : K
 end
 
+function exponentialToLinearGrowth(Ni, K, rExp, rLin, t)
+    tK = log(K/Ni)/rExp
+    t<tK ? n=exponentialGrowth(Ni, rExp, t) : n=linearGrowth(K, rLin, t-tK)
+    return n
+end
 
 
 end

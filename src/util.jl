@@ -3,6 +3,13 @@ function freqToInd(freq, df)
     1 + Int(round(freq/df))
 end
 
+function freqToNearestInd(vfs::VFreqspace, f)
+    return findmin(abs.(vfs.freqs_f .- f))[2]
+end
+
+function freqToNearestInd(freqs_f::Vector{Float64}, f)
+    return findmin(abs.(freqs_f .- f))[2]
+end
 
 """ Finite differences """
 
@@ -32,3 +39,5 @@ end
 function cd2(f::Array{T} where T<:Number, dx::Float64)
     cd2(f[2:end-1], f[3:end], f[1:end-2], dx)
 end
+
+# ========= Other =========

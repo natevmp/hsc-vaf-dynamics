@@ -45,3 +45,5 @@ hydra/abc3_jobfile.pbs
 
 #data, some files got to big
 data/bottleneck/
+data/SinglePatientPipeline/
+data/SingleCellBurden/
