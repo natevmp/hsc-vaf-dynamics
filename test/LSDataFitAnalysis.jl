@@ -18,8 +18,8 @@ variants_var_col = Array{Int}(untypedM)
 
 ## ===== Order data =====
 HSCMask_col = fill(false, size(variants_var_col, 2))
-HSCMask_col[1:73] .= true
-# HSCMask_col[125:end] .= true
+HSCMask_col[1:73] .= true   # bone marrow HSCs
+# HSCMask_col[125:end] .= true  # Peripheral blood HSCs
 HPCMask_col = .!HSCMask_col
 sampleSize = sum(HSCMask_col)
 

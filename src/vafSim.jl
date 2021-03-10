@@ -893,7 +893,7 @@ function birthDeathGrowth(params, tStop, tSaveStep)
 	return times_t, nLive_t, vaf_n, vafB_n, burden_m, burdenB_m
 end
 
-function birthDeathFixedGrowth(params, tStop, tSaveStep)
+function birthDeathFixedGrowth(params::Dict, tStop::Real, tSaveStep::Union{Real, Nothing}; showprogress=false, singleCellSpectrum::Bool=false)
 
 	Nin = params["N initial"]
 	Nf = params["N final"]
@@ -928,7 +928,8 @@ function birthDeathFixedGrowth(params, tStop, tSaveStep)
 	t += dt(nLive)
 	# nSymDivs = 0
 	# nAsymDivs = 0
-	tCounter = 1
+	saveCounter = 1
+	progressCounter = 1
 	while t < tStop
 
 		# ===== growth =====
@@ -962,7 +963,7 @@ function birthDeathFixedGrowth(params, tStop, tSaveStep)
 			mutPrevs_loc += muts_loc_cell[:, selfrCID]
 			# randomly mutate daughters with on average μ mutations
 			mLive += mutateCell!(muts_loc_cell, mutPrevs_loc, mLive, selfrCID, μ)
-			if diffCID != selfr(CID)
+			if diffCID != selfrCID
 				mLive += mutateCell!(muts_loc_cell, mutPrevs_loc, mLive, diffCID, μ)
 			end
 			# nSymDivs += 1
@@ -979,22 +980,38 @@ function birthDeathFixedGrowth(params, tStop, tSaveStep)
 
 		t += dt(nLive)	# should this be moved up, before Poisson events but after Growth?
 
-		if t>tSaves_t[tCounter]
+		if t>tSaves_t[saveCounter]
 			push!(nLive_t, nLive)
 			push!(times_t, t)
-			tCounter += 1
+			saveCounter += 1
 		end
+
+		if showprogress
+			if t > progressCounter * tStop/100
+				print("progress: "*string(progressCounter)*"% \r")
+				progressCounter += 1
+			end
+		end
+
 	end
 
 	# after simulation, record VAF before and after bottleneck
-	bottleneck_inds = randperm(nLive)[1:S]
-	burdenB_m = burdencalc(muts_loc_cell[:, bottleneck_inds], S, mLive)
-	burden_m = burdencalc(muts_loc_cell, nLive, mLive)
+	sampleInds_i = randperm(nLive)[1:S]
+	burdenCell_cid = vec(sum(muts_loc_cell,dims=1))
+	burdenCellS_cid = burdenCell_cid[sampleInds_i]
+	burdenDistS_m = burdencalc(muts_loc_cell[:, sampleInds_i], S, mLive)
+	burdenDist_m = burdencalc(muts_loc_cell, nLive, mLive)
 
-	vafB_n = VAFcalc(muts_loc_cell[:, bottleneck_inds], S, mLive)
-	vaf_n = VAFcalc(muts_loc_cell, Nf, mLive)
+	nVarsBulkS_f = VAFcalc(muts_loc_cell[:, sampleInds_i], S, mLive)
+	nVarsBulk_f = VAFcalc(muts_loc_cell, Nf, mLive)
 
-	return times_t, nLive_t, vaf_n, vafB_n, burden_m, burdenB_m
+	if singleCellSpectrum
+		nVarsSC_cid_f = VAFcalcSC(muts_loc_cell, Nf, mLive)
+		nVarsSCS_cid_f = VAFcalcSC(muts_loc_cell[:, sampleInds_i])
+		return times_t, nLive_t, nVarsBulk_f, nVarsBulkS_f, burdenDist_m, burdenDistS_m, burdenCell_cid, burdenCellS_cid, nVarsSC_cid_f, nVarsSCS_cid_f
+	else
+		return times_t, nLive_t, nVarsBulk_f, nVarsBulkS_f, burdenDist_m, burdenDistS_m, burdenCell_cid, burdenCellS_cid
+	end
 end
 
 function mutateCell!(muts_loc_cell, mutPrevs_loc, mLive, cellCID, μ)
@@ -1064,6 +1081,40 @@ function VAFcalc(muts_loc_cell::AbstractArray{Bool, 2}, N, mLive)
 	return vaf_n
 end
 
+function VAFcalcSC(muts_vid_cid::AbstractArray{Bool, 2}, nCells, nVars)
+	nMuts_cid_vaf = zeros(Int16, nCells, nCells)
+	for vid in 1:nVars
+		vPrev = sum(muts_vid_cid[vid, :])
+		for cid in 1:nCells
+			if muts_vid_cid[vid,cid]
+				nMuts_cid_vaf[cid, vPrev] += 1
+			end
+		end
+	end
+	return nMuts_cid_vaf
+end
+
+function VAFcalcSC(muts_vid_cid::AbstractArray{Bool, 2})
+	nCells = size(muts_vid_cid)[2]
+
+	vLiveIds_ = Int[]
+	for vid in 1:size(muts_vid_cid)[1]
+		if sum(muts_vid_cid[vid,:])>0
+			push!(vLiveIds_, vid)
+		end
+	end
+
+	nMuts_cid_vaf = zeros(Int16, nCells, nCells)
+	for vid in vLiveIds_
+		vPrev = sum(muts_vid_cid[vid, :])
+		for cid in 1:nCells
+			if muts_vid_cid[vid,cid]
+				nMuts_cid_vaf[cid, vPrev] += 1
+			end
+		end
+	end
+	return nMuts_cid_vaf
+end
 
 function burdencalc(muts_loc_cell::AbstractArray{Bool, 2}, N, mLive)
 	# mutPrev_loc = sum(muts_loc_cell, dims=2)
