@@ -672,7 +672,7 @@ function birthDeathGrowthExp(params, tStop, tSaveStep)
 	gR = params["growth rate"]
 	S = params["sample size"]
 
-	maxMuts = Integer(round(200*μ*Nf*(1-p/2)/(1-p)))
+	maxMuts = Integer(round(50*μ*log(Nf)*Nf*(1-p/2)/(1-p)))
 	muts_loc_cell = falses(maxMuts, Nf)
 	# muts_loc_cell = sparse(falses(maxMuts, N))
 	mutPrevs_loc = zeros(Int16, maxMuts)
