@@ -785,6 +785,120 @@ function birthDeathGrowthExp(params, tStop, tSaveStep)
 	return times_t, nLive_t, vaf_n_t, vafB_n_t, burden_m, burdenB_m, events
 end
 
+function birthDeathGrowthLog(params, tStop, tSaveStep)
+
+	Nin = params["N initial"]
+	Nf = params["N final"]
+	μ = params["μ"]
+	p = params["p"]
+	λ = params["λ"]
+	gR = params["growth rate"]
+	S = params["sample size"]
+
+	maxMuts = Integer(round(50*μ*log(Nf)*Nf*(1-p/2)/(1-p)))
+	muts_loc_cell = falses(maxMuts, Nf)
+	# muts_loc_cell = sparse(falses(maxMuts, N))
+	mutPrevs_loc = zeros(Int16, maxMuts)
+	mLive = 0
+	mFixed = 0
+
+	γ(n) = logisticGrowthRate(n, gR, Nf)
+	dt(n) = rand(  Exponential( 1/( (λ+gR)*n ) )  )
+
+	tSaves_t = tSaveStep:tSaveStep:tStop
+	times_t = Float64[]
+	push!(times_t, 0.)
+	nLive_t = Int[]
+	push!(nLive_t, Nin)
+
+	t_size = size(tSaves_t)[1]
+
+	vaf_n_t = zeros(Int64,Nf+1,t_size)
+	vafB_n_t = zeros(Int64,S+1,t_size)
+
+	nLive = Nin
+	t = 0
+	t += dt(nLive)
+	# nSymDivs = 0
+	# nAsymDivs = 0
+
+	tCounter = 1
+	events = 0
+	while t < tStop
+		events += 1
+		pGrowth = γ(nLive)/(λ+γ(nLive))
+		pSym = λ*(1-p)/(λ+γ(nLive))
+		# pASym = λ*p/(λ+γ(nLive))
+
+		event = rand()
+		if event < pGrowth	# ===== growth =====
+			# choose individual cell for symmetric division
+			divCID = rand(1:nLive)
+			nLive += 1
+			newCID = nLive
+			# add copy of self-renewing cell ID to mutation matrix
+			muts_loc_cell[:, newCID] = muts_loc_cell[:, divCID]
+			mutPrevs_loc += muts_loc_cell[:, newCID]
+			# randomly mutate daughters with on average μ mutations
+			mLive += mutateCell!(muts_loc_cell, mutPrevs_loc, mLive, divCID, μ)
+			mLive += mutateCell!(muts_loc_cell, mutPrevs_loc, mLive, newCID, μ)
+		elseif event < (pGrowth + pSym)	# ===== Moran symmetric divisions =====
+			# choose individual cells for differentiation/self-renewal
+			diffCID = rand(1:nLive)
+			selfrCID = rand(1:nLive)
+			# remove differentiating cell from prevalence vector
+			mutPrevs_loc -= muts_loc_cell[:, diffCID]
+			# replace differentiating cell ID with copy of self-renewing cell ID
+			muts_loc_cell[:, diffCID] = muts_loc_cell[:, selfrCID]
+			# add copy of self-renewing cell ID to prevalence vector
+			mutPrevs_loc += muts_loc_cell[:, selfrCID]
+			# randomly mutate daughters with on average μ mutations
+			mLive += mutateCell!(muts_loc_cell, mutPrevs_loc, mLive, selfrCID, μ)
+			mLive += mutateCell!(muts_loc_cell, mutPrevs_loc, mLive, diffCID, μ)
+			# nSymDivs += 1
+		else	# ===== asymmetric division =====
+			# choose individual cell for asymmetric division
+			divCID = rand(1:nLive)
+			# randomly mutate daughter with on average μ mutations
+			mLive += mutateCell!(muts_loc_cell, mutPrevs_loc, mLive, divCID, μ)
+			# nAsymDivs += 1
+		end
+
+		# clean up the gene by removing all mutations that can't change anymore
+		# mLive, mFixed = cleanGenes!(muts_loc_cell, mutPrevs_loc, nLive, mLive, mFixed)
+
+		t += dt(nLive)
+
+		if t>tSaves_t[tCounter]
+			push!(nLive_t, nLive)
+			push!(times_t, t)
+			bottleneck_inds = randperm(Nf)[1:S]
+			if nLive > S
+				vafB_n_t[:,tCounter] = VAFSim.VAFcalc(muts_loc_cell[:, bottleneck_inds], S, mLive)
+			end
+			vaf_n_t[:,tCounter] = VAFSim.VAFcalc(muts_loc_cell, Nf, mLive)
+
+			tCounter += 1
+		end
+	end
+
+	#return
+
+	bottleneck_inds = randperm(Nf)[1:S]
+
+	burden_m = burdencalc(muts_loc_cell, nLive, mLive)
+	if nLive > S
+		#vafB_n = VAFcalc(muts_loc_cell[:, bottleneck_inds], S, mLive)
+		burdenB_m = burdencalc(muts_loc_cell[:, bottleneck_inds], S, mLive)
+	else
+		#vafB_n = 0
+		burdenB_m = 0
+	end
+	#vaf_n = VAFcalc(muts_loc_cell, Nf, mLive)
+
+	return times_t, nLive_t, vaf_n_t, vafB_n_t, burden_m, burdenB_m, events
+end
+
 function logisticGrowthRate(n, r, K)
 	r * ( 1 - n/K )
 end
