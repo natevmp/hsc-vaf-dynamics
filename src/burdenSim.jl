@@ -4,9 +4,19 @@ using Random
 using Distributions
 # using SparseArrays
 
+exponentialGrowth(Ni, r, t) = Ni*exp(r*t)
+linearGrowth(Ni, r, t) = Ni + Ni*r*t
+
 function cappedExponentialGrowth(Ni, K, r, t)
 	return Ni*exp(r*t)<K ? Ni*exp(r*t) : K
 end
+
+function exponentialToLinearGrowth(Ni, K, rExp, rLin, t)
+    tK = log(K/Ni)/rExp
+    t<tK ? n=exponentialGrowth(Ni, rExp, t) : n=linearGrowth(K, rLin, t-tK)
+    return n
+end
+
 
 function evolveSCBurden(params::Dict, evolveTime::Number, tSaveStep::Number)
     Ni = params["N initial"]
@@ -21,7 +31,12 @@ function evolveSCBurden(params::Dict, evolveTime::Number, tSaveStep::Number)
 
     mutDist = Poisson(μ)
     dt(n) = rand( Exponential(1/(λ*n)) )
+    
     nTime(tt) = cappedExponentialGrowth(Ni, Nf, gR, tt)
+    # nTime(tt) = linearGrowth(Ni, gR, tt)
+    # nTime(tt) = exponentialToLinearGrowth(
+    #     Ni, Nf, params["exp growth rate"], params["lin growth rate"], tt
+    #     )
     
     scBurden_cid = zeros(Int64, Ni)
     times_t = Float64[]
@@ -33,9 +48,9 @@ function evolveSCBurden(params::Dict, evolveTime::Number, tSaveStep::Number)
 	nLive_t = Int64[]
 	push!(nLive_t, Ni)
     tCounter = 1
-
+    
     while t<evolveTime
-        
+
         if nLive < round(nTime(t))
             # grow pop
             divCID = rand(1:nLive)
