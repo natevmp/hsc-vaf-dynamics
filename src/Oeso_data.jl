@@ -80,31 +80,37 @@ for k = 1:9
 
 	cor1f[k] = cor( fit , y )
 	#cor1f2[k] = cor( (1 ./ (1:100).^2) , (vafM_n_t[2:101,k]./vafM_n_t[2,k]) )
-	n = 20
-	xplot = (2:1:n-1) ./ 200
-	yplot = vafdata_n[3:1:n] ./ vafdata_n[3]
+	n = 200
+	xplot = (1:1:n-2) ./ 200
+	yplot = vafdata_n[3:1:n] #./ vafdata_n[3]
 
 	x1 = 1 ./ (n .* xplot)
-	x1 = x1 ./ x1[1]
+	a1 = sum(yplot .* x1) ./ sum(x1.^2)
+	x1fit = x1 .* a1
+	#x1 = x1 #./ x1[1] #.* vafdata_n[3]
 
 	x2 = 1 ./ (n .* xplot).^2
-	x2 = x2 ./ x2[1]
+	a2 = sum(yplot .* x2) ./ sum(x2.^2)
+	x2fit = x2 .* a2
+	#x2 = x2 #./ x2[1] #.* vafdata_n[3]
 
 	x15 = 2 ./ ( (n .* xplot).^ 2 + n .* xplot)
-	x15 = x15 ./ x15[1]
+	a15 = sum(yplot .* x15) ./ sum(x15.^2)
+	x15fit = x15 .* a15
+	#x15 = x15 ./ x15[1] #.* vafdata_n[3]
 
 	col = 1 .- ages[k] ./ ages[9]
 
-	plot(xplot,x1,label ="1/x", color =:darkgreen)
-	plot!(xplot ,x2, label = "1/x^2", color =:green1)
-	plot!(xplot ,x15, label = string("2/f - 2/(f+1)"), color =:green)
-	plot!(xplot, yplot,label="data",seriestype = :scatter, legend=:topright,color = RGBA(col,col,col))
+	plot(xplot,x1fit,label ="1/x", color =3,yaxis=:log,ylim=(10^(-1),10^(3)))
+	plot!(xplot,x2fit, label = "1/x^2", color =4)
+	#plot!(1 ./ xplot[end:-1:1],x15fit[end:-1:1],label = string("2/f - 2/(f+1)"), color =5)
+	plot!(xplot,yplot,label="data",seriestype = :scatter, legend=:topright,color = RGBA(col,col,col))
 
 	title!(string("VAF Age = ", ages[k]))
 	xlabel!("frequency")
-	ylabel!("relative M")
+	ylabel!("# of Mutations")
 
-	fig_name = string("../Figures/oeso/vaf_", k,".pdf")
+	fig_name = string("../Figures/oeso/vaf_", k, ".pdf")
 
 	savefig(fig_name)
 
