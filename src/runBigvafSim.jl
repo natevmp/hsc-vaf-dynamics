@@ -4,7 +4,9 @@ using JLD2
 ##Script to run the simulation of neutrally evolving populations
 
 params = Dict("N initial" => 1, "N final" => 10000, "μ" => 1, "p" => 0, "λ" => 1,"growth rate" => 1,"sample size" => 100)
-tStop = 20
+
+tStop = 80
+
 tSaveStep = 1
 
 
