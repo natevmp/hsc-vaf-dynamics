@@ -1,6 +1,6 @@
 module Theory
 
-export extendParams!
+export extendParams!, getλFromTotalDivisions
 
 expGrowthRateFromNT(Nf, t) = log(Nf)/t
 

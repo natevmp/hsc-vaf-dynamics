@@ -1,53 +1,83 @@
 include("../src/vafdyn.jl")
+using .VAFDyn
+include("../src/theory.jl")
+using .Theory
 
-using DelimitedFiles, JLD2, ProgressMeter
+using DelimitedFiles, FileIO
+using ProgressMeter
 using ApproxBayes
 using Distributions, Distances
-using .VAFDyn
 
 using Plots
 gr()
 
-## ============================== Load Lee-Six Data ==============================
-@load "data/LSDataStats.jld2"
-# mutMean, mutVar, freqsData_f, vafData_f, sampleSize
-
 ## ========================== Parameters for evolution ===========================
-knownMu = true
-
-evoParams = Dict{String,Number}(
-    "t"=>59,
-    "sampleSize"=>sampleSize
+knownMu = false
+paramsIn = Dict{String,Number}(
+    "evolve time" => paramsData["t"],
+    "sample size" => paramsData["sample size"],
+    "N initial" => 1,
+    "mature time" => 15
     )
 
 if knownMu
-    evoParams["μ"] = 1.2
+    paramsIn["μ"] = 1.2
+    paramsIn["division rate"] = let 
+        m = paramsData["mutMean"]
+        t = paramsData["t"]
+        μ = paramsIn["μ"]
+        m / (μ*t)
+    end
 else
-    evoParams["μ"] = mutVar/mutMean - 1.
+    paramsIn["μ"] = paramsData["mutVar"]/paramsData["mutMean"] - 1.
+    paramsIn["division rate"] = let 
+        m = paramsData["mutMean"]
+        v = paramsData["mutVar"]
+        t = paramsData["t"]
+        m^2/(v-m)/t
+    end
 end
 
-popSizes_N = 10^4:5*10^3:14*10^4
-pVals_p = 0.05:0.025:0.95
+N_N = 10^4:5*10^3:14*10^4
+p_p = 0.05:0.025:0.95
+
 
 ## ============================== create VAF spectra ==============================
 
-function createVAFs()
+function calcExpectedVAFs()
 
     vaf1_p_N = Array{Float64,2}(undef, length(pVals_p), length(popSizes_N))
     @showprogress for (i,p) in enumerate(pVals_p)
         for (j,N) in enumerate(popSizes_N)
 
             if knownMu
-                # λ = mutMean / (evoParams["μ"]*(2-p)*evoParams["t"])
-                λ = 10.
+                λ = mutMean / (evoParams["μ"]*(2-p)*evoParams["t"])
+                # λ = 10.
+                divRateInferred = meanBurdenS^2/(mutVar-mutMean)/paramsKnown["evolve time"]
             else
                 λ = mutMean^2/(mutVar - mutMean) / ( (2-p)*evoParams["t"] )
             end
+
+            # r = params["division rate"]
+            # t = params["evolve time"]
+            # tf = params["mature time"]
+            # Nf = Int(round(N))
+            # γ = log(Nf)/tf
+            # λ = (r-log(Nf)/t)/(2-p)
+            # paramsTest = deepcopy(params)
+            # paramsTest["N final"] = Nf
+            # paramsTest["p"] = p
+            # paramsTest["growth rate"] = γ
+            # paramsTest["λ"] = λ
+
+            evoParams["N final"] = N
             evoParams["ρ"] = λ*(1-p)
             evoParams["ϕ"] = λ*p
-            evoParams["N"] = N
+            evoParams["N initial"] = 1
+            evoParams["N mature"] = 15
 
             vfs = VAFDyn.VFreqspace(evoParams["N"],1001)
+            # VAFDyn.evolveVAFfd(vfs, evoParams, evoParams["t"]);
             VAFDyn.evolveVAFfd(vfs, evoParams, evoParams["t"]);
             dfs = VAFDyn.makeDFSfromVFS(vfs, evoParams["N"])
             dfsSampled = VAFDyn.sampler(dfs, evoParams["sampleSize"])
@@ -106,7 +136,7 @@ function bestPars(vafError_p_N, NVals_N)
 end
 
 ##
-@time vaf1_p_N = createVAFs()
+@time vaf1_p_N = calcExpectedVAFs()
 
 ##
 

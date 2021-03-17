@@ -39,48 +39,6 @@ function evolveVAF(dfs::DFreqspace, params::Dict, t::Number; addClones::Bool=tru
     dfs.n_f .= sol.u[2]
 end
 
-function evolveGrowingVAF(dfs::DFreqspace, params::Dict, t::Number;
-    addClones::Bool=true, dt::Union{Real,Nothing}=nothing)
-    Ni = params["N initial"]
-    Nf = params["N final"]
-    ρ = params["ρ"]
-    ϕ = params["ϕ"]
-    μ = params["μ"]
-    gR = params["growth rate"]
-
-    nT(tt) = cappedExponentialGrowth(Ni, Nf, gR, tt)
-    γ(n) = cappedExpGrowthRate(n, Nf, gR)
-
-    mrUp(m,N) = m*( 1-m/N )*ρ + m*γ(N)
-    mrDw(m,N) = m*( 1-m/N )*ρ
-    m_m = 0:Nf
-    mrUp_m = zeros(Nf+1)
-    mrDw_m = zeros(Nf+1)
-    function step!(dn_m, n_m, (mrUp_m, mrDw_m), t)
-        Nind = Int(floor(nT(t))) + 1
-        # Calculate frequency dependent move rate
-        mrUp_m[1:Nind] .= (m->mrUp(m,nT(t))).(@view m_m[1:Nind])
-        mrDw_m[1:Nind] .= (m->mrDw(m,nT(t))).(@view m_m[1:Nind])
-        # dn_m[1] = mrDw_m[2]*n_m[2]
-        # dn_m[Nind] = mrUp_m[Nind-1]*n_m[Nind-1]
-        @views @. dn_m[2:end-1] .= -(mrUp_m[2:end-1]+mrDw_m[2:end-1])*n_m[2:end-1] +
-                mrUp_m[1:end-2]*n_m[1:end-2] +
-                mrDw_m[3:end]*n_m[3:end]
-        dn_m[2] += nT(t)*2μ*( ρ+ϕ/2+γ(nT(t)) )
-    end
-    # n0_m = SVector{length(n_m)}(dfs.n_f)
-    n0_m = dfs.n_f
-    # prob = ODEProblem(step!, n0_m, (0.0, t))
-    prob = ODEProblem(step!, n0_m, (0.0, t), (mrUp_m, mrDw_m))
-    # alg = KenCarp4() #stable for stiff PDE
-    # alg = TRBDF2(autodiff=false) #stablest for stiff PDE
-    # alg = Rodas4(autodiff=false)
-    # sol = solve(prob, save_everystep=false, maxiters=5e4, autodiff=false)
-    sol = solve(prob, save_everystep=false)
-    # println(sol.alg)
-    dfs.n_f .= sol.u[2]
-end
-
 """Evolve fixed sized population with Moran dynamics as a diffusion PDE"""
 function evolveVAF(cfs::CFreqspace, params::Dict, t::Real; addClones::Bool=true)
     N = params["N"]
@@ -243,6 +201,48 @@ function fpOp(p::Array{T}, a::Array{T}, b::Array{T}, dx::Float64) where T
     return - fd1(a[2:end].*p[2:end], dx) .+ (1/2)*cd2(b.*p, dx)
 end
 
+function evolveGrowingVAF(dfs::DFreqspace, params::Dict, t::Number;
+    addClones::Bool=true)
+    Ni = params["N initial"]
+    Nf = params["N final"]
+    ρ = params["ρ"]
+    ϕ = params["ϕ"]
+    μ = params["μ"]
+    gR = params["growth rate"]
+
+    nT(tt) = cappedExponentialGrowth(Ni, Nf, gR, tt)
+    γ(n) = cappedExpGrowthRate(n, Nf, gR)
+
+    mrUp(m,N) = m*( 1-m/N )*ρ + m*γ(N)
+    mrDw(m,N) = m*( 1-m/N )*ρ
+    m_m = 0:Nf
+    mrUp_m = zeros(Nf+1)
+    mrDw_m = zeros(Nf+1)
+    function step!(dn_m, n_m, (mrUp_m, mrDw_m), t)
+        Nind = Int(floor(nT(t))) + 1
+        # Calculate frequency dependent move rate
+        mrUp_m[1:Nind] .= (m->mrUp(m,nT(t))).(@view m_m[1:Nind])
+        mrDw_m[1:Nind] .= (m->mrDw(m,nT(t))).(@view m_m[1:Nind])
+        # dn_m[1] = mrDw_m[2]*n_m[2]
+        # dn_m[Nind] = mrUp_m[Nind-1]*n_m[Nind-1]
+        @views @. dn_m[2:end-1] .= -(mrUp_m[2:end-1]+mrDw_m[2:end-1])*n_m[2:end-1] +
+                mrUp_m[1:end-2]*n_m[1:end-2] +
+                mrDw_m[3:end]*n_m[3:end]
+        dn_m[2] += nT(t)*2μ*( ρ+ϕ/2+γ(nT(t)) )
+    end
+    # n0_m = SVector{length(n_m)}(dfs.n_f)
+    n0_m = dfs.n_f
+    # prob = ODEProblem(step!, n0_m, (0.0, t))
+    prob = ODEProblem(step!, n0_m, (0.0, t), (mrUp_m, mrDw_m))
+    # alg = KenCarp4() #stable for stiff PDE
+    # alg = TRBDF2(autodiff=false) #stablest for stiff PDE
+    # alg = Rodas4(autodiff=false)
+    # sol = solve(prob, save_everystep=false, maxiters=5e4, autodiff=false)
+    sol = solve(prob, save_everystep=false)
+    # println(sol.alg)
+    dfs.n_f .= sol.u[2]
+end
+
 """Evolve growing population VAF spectrum with Moran and pure birth dynamics"""
 function evolveGrowingVAF(vfs::VFreqspace, params::Dict, t::Real; addClones::Bool=true)
     Ni = params["N initial"]
@@ -288,6 +288,27 @@ function evolveGrowingVAF(vfs::VFreqspace, params::Dict, t::Real; addClones::Boo
     sol = solve(prob, save_everystep=false)
 
     vfs.n_f[2:end-1] .= sol.u[end] * Nf
+end
+
+function evolveGrowingVAFHybrid(dfs::DFreqspace, params::Dict, t::Number, l::Int;
+    addClones::Bool=true, NSwitch::Int=50)
+    Ni = params["N initial"]
+    Nf = params["N final"]
+    γ = params["growth rate"]
+    t = params["evolve time"]
+
+    tSwitch = log(NSwitch) / γ
+    
+    if Nf < NSwitch || t < tSwitch
+        return evolveGrowingVAF(dfs, params, t, addClones=addClones)
+    end
+
+    paramsDFS = deepcopy(params)
+    paramsDFS["evolve time"] = tSwitch
+    evolveGrowingVAF(dfs, params, tSwitch, addClones=addClones)
+    
+
+
 end
 
 """Evolve growing population single cell VAF spectrum with Moran and pure birth dynamics"""

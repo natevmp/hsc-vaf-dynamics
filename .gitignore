@@ -45,3 +45,13 @@ hydra/abc3_jobfile.pbs
 
 #data, some files got to big
 data/bottleneck/
+<<<<<<< Updated upstream
+=======
+<<<<<<< Updated upstream
+data/SinglePatientPipeline/
+data/SingleCellBurden/
+=======
+data/SingleCellBurden/
+data/SinglePatientPipeline/
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes
