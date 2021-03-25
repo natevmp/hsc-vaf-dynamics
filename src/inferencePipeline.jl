@@ -40,8 +40,8 @@ function createTestParams(params::Dict, N::Real, p::Real)
 end
 
 # ---------- create VAF spectra ----------
-function calcExpectedVAFs(paramsIn::Dict, _N::AbstractArray, _p::AbstractArray, lengthVFS::Int)
-    nVAF1_p_N = Array{Float64,2}(undef, length(_p), length(_N))
+function calcExpectedVAFs(paramsIn::Dict, _N::AbstractArray, _p::AbstractArray, lengthVFS::Int, vafFit::Int=1)
+    nVafFit_p_N = Array{Float64,2}(undef, length(_p), length(_N))
     for (i,p) in enumerate(_p)
         for (j,N) in enumerate(_N)
             paramsParticle = createTestParams(paramsIn, N, p)
@@ -49,16 +49,16 @@ function calcExpectedVAFs(paramsIn::Dict, _N::AbstractArray, _p::AbstractArray, 
             VAFDyn.evolveGrowingVAF(vfs, paramsParticle, paramsParticle["evolve time"])
             dfs = VAFDyn.makeDFSfromVFS(vfs, paramsParticle["N final"])
             dfsS = VAFDyn.sampler(dfs, paramsParticle["sample size"])
-            nVAF1_p_N[i,j] = dfsS.n_f[2]
+            nVafFit_p_N[i,j] = dfsS.n_f[1+vafFit]
         end
     end
-    return nVAF1_p_N
+    return nVafFit_p_N
 end
 
 # ---------- get interpolated solutions ----------
-function findZeroErrorLine(nVAF1_p_N, nData_f, _N, _p; l::Int=100, verbose=false)
+function findZeroErrorLine(nVafTheoryfit_p_N, nVafDataFit::Int, _N, _p; l::Int=100, verbose=false)
     
-    vaf1Error_p_N = (nVAF1_p_N .- nData_f[2])/nData_f[2]
+    vaf1Error_p_N = (nVafTheoryfit_p_N .- nVafDataFit)/nVafDataFit
     vaf1ErrorSpl_p_N = Spline2D(_p, _N, vaf1Error_p_N)
     
     verbose ? display(vaf1Error_p_N) : nothing
@@ -96,13 +96,13 @@ end
 
 # =================== Full Pipeline ===================
 
-function calcNpSpace(paramsKnown::Dict, nVarS_f, mVarsS_cid::Vector{Int}, _N, _p, lVFS::Int; lCont::Int=100, verbose=false)
+function calcNpSpace(paramsKnown::Dict, nVarS_f, mVarsS_cid::Vector{Int}, _N, _p, lVFS::Int, vafFit::Int=1; lCont::Int=100, verbose=false)
     paramsEst = estimateRates(mVarsS_cid)
     paramsIn = merge(paramsKnown, paramsEst)
     verbose ? display(paramsIn) : nothing
-    nVAF1_p_N = calcExpectedVAFs(paramsIn, _N, _p, lVFS)
+    nVafTheoryFit_p_N = calcExpectedVAFs(paramsIn, _N, _p, lVFS, vafFit)
     Nopt_p, NoptSpl_p, pCont_p, NCont_N, NOptInterpol_p, vaf1ErrorInterpol_p_N = 
-        findZeroErrorLine(nVAF1_p_N, nVarS_f, _N, _p; l=lCont, verbose=verbose)
+        findZeroErrorLine(nVafTheoryFit_p_N, nVarS_f[1+vafFit], _N, _p; l=lCont, verbose=verbose)
     return NCont_N, pCont_p, NOptInterpol_p, vaf1ErrorInterpol_p_N
 end
 

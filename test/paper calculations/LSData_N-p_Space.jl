@@ -19,7 +19,7 @@ paramsKnown = Dict{String, Real}(
 )
 
 
-_NDisc = [501,1E5,3E5,7E5]
+_NDisc = [1E3,1E4,6E4,9E4]
 _pDisc = [0.1, 0.35, 0.65, 0.85]
 
 ##
@@ -37,6 +37,18 @@ stephist!(cpVals_id, normalize=true)
 display(figTest)
 
 ##
-@time _N, _p, NOptInterpol_p, vaf1ErrorInterpol_p_N = calcNpSpace(paramsKnown, nVHSC_f, SCBurdenHSC_CID, _NDisc, _pDisc, 200; verbose=true)
+
+VafFit = 3
+
+##
+@time _N, _p, NOptInterpol_p, vaf1ErrorInterpol_p_N = InferencePipeline.calcNpSpace(paramsKnown, nVHSC_f, SCBurdenHSC_CID, _NDisc, _pDisc, 500, VafFit; verbose=true)
 
 
+##
+
+fig1 = plot(_p, NOptInterpol_p, label="vaf fit:"*string(VafFit))
+xlabel!("p")
+ylabel!("N")
+
+display(fig1)
+savefig(fig1, "NP_fit"*string(VafFit)*".pdf")

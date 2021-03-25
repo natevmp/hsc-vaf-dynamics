@@ -94,3 +94,11 @@ function vafDiff(params::Dict, time::Real, dt::Real, l::Int)
     evolveVAF(cfs, params, time, dt)
     return cfs
 end
+
+function getGrownVafSpectrum(params, lVfs)
+    vfs = VAFDyn.VFreqspace(params["N final"], lVfs)
+    VAFDyn.evolveGrowingVAF(vfs, params, params["evolve time"])
+    dfs = VAFDyn.makeDFSfromVFS(vfs, params["N final"])
+    dfsS = VAFDyn.sampler(dfs, params["sample size"])
+    return dfs.freqs_f, dfs.n_f, dfsS.freqs_f, dfsS.n_f
+end

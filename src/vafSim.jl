@@ -3,7 +3,7 @@ module VAFSim
 using Random
 using Distributions
 using SparseArrays
-using CSV
+# using CSV
 
 export birthDeathShort
 
