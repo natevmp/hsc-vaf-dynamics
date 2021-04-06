@@ -9,12 +9,14 @@ using .VAFDyn
 include("../../src/theory.jl")
 using .Theory
 
+SAVEPLOTS = true
 
 ## =============== Load data ===============
 # --------- sim VAF data ---------
 
-fileNames_ = glob("singlePatient*.jld2", "./data/SinglePatientPipeline/Nf10000")
+fileNames_ = glob("singlePatientFullSim_Ni*.jld2", "./data/SinglePatientPipeline/Nf10000")
 nSims = length(fileNames_)
+println(nSims)
 @load fileNames_[1] paramsTrue timesSim_ nCellSim_t
 nV_sim_f = Array{Float64, 2}(undef, nSims, paramsTrue["N final"]+1)
 nVS_sim_f = Array{Float64, 2}(undef, nSims, paramsTrue["sample size"]+1)
@@ -41,11 +43,15 @@ freqs_f = (0:paramsTrue["N final"]) / paramsTrue["N final"]
 freqsS_f = (0:paramsTrue["sample size"]) / paramsTrue["sample size"]
 
 ## ---------- complete ---------
-fig1 = plot(yscale=:log10)
+# fig1 = plot(yscale=:log10)
+fig1 = plot(yscale=:log10, xscale=:log10)
 plot!(freqs_f[2:end], nV_sim_f[1, 2:end],
 # linewidth=0,
-linetype=:steppre,
-linewidth=0.2,
+# linetype=:steppre,
+# linetype=:steppost,
+# linewidth=0.2,
+linestyle=:sticks,
+linewidth=0.5,
 linealpha=0.9,
 fillrange=0,
 fillalpha=0.9,
@@ -84,11 +90,15 @@ title!("complete")
 display(fig1)
 
 ## ---------- sample ---------
-fig2 = plot(yscale=:log10)
+# fig2 = plot(yscale=:log10)
+fig2 = plot(yscale=:log10, xscale=:log10)
 plot!(freqsS_f[2:end], nVS_sim_f[1, 2:end],
-linetype=:steppre,
 color=2,
-linewidth=0.2,
+# linetype=:steppre,
+# linetype=:steppost,
+# linewidth=0.2,
+linetype=:sticks,
+linewidth=2,
 linealpha=0.9,
 fillrange=0,
 fillalpha=0.9,
@@ -111,7 +121,7 @@ color=:black,
 linestyle=:dash,
 label="predicted average")
 ylims!(10^0,10^5)
-xlims!(1/paramsTrue["sample size"],1)
+xlims!(1/(1.1paramsTrue["sample size"]),1)
 xlabel!("VAF")
 ylabel!("number of variants")
 title!("sample")
@@ -120,7 +130,8 @@ display(fig2)
 ## ------- save fig --------
 fig3 = plot(fig1, fig2, layout=2, size=(900, 400))
 display(fig3)
-savefig(fig3, "figures/paper/simsVAFSpectrumTrueVsSample.pdf")
+# SAVEPLOTS && savefig(fig3, "figures/paper/simsVAFSpectrumTrueVsSample.pdf")
+SAVEPLOTS && savefig(fig3, "figures/paper/simsVAFSpectrumTrueVsSampleLogLog.pdf")
 
 
 

@@ -33,15 +33,15 @@ VAFdynamics.code-workspace
 notebooks/.ipynb_checkpoints/VAFdyn-checkpoint.ipynb
 
 # testing stuff
-*_testingStuff.jl
-*.jld
-test/abcTestMJW.jl
-notebooks/SamplingVsAltEvolve-Copy1.ipynb
-notebooks/sampleMutations_testingStuff.ipynb
-hydra/testVAF_jobfile.pbs
-hydra/submit.sh
-hydra/abc3Alt_jobfile.pbs
-hydra/abc3_jobfile.pbs
+# *_testingStuff.jl
+# *.jld
+# test/abcTestMJW.jl
+# notebooks/SamplingVsAltEvolve-Copy1.ipynb
+# notebooks/sampleMutations_testingStuff.ipynb
+# hydra/testVAF_jobfile.pbs
+# hydra/submit.sh
+# hydra/abc3Alt_jobfile.pbs
+# hydra/abc3_jobfile.pbs
 
 #data, some files got to big
 data/bottleneck/
