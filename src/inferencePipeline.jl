@@ -22,6 +22,17 @@ function estimateRates(mVars_cid)
     return paramsEst
 end
 
+function estimateRates(mVars_cid::Vector{<:Integer}, μKnown::Real)
+    varBurdenS = var(mVars_cid)
+    meanBurdenS = mean(mVars_cid)
+    r, μ = Theory.getCPRateParamsFromBurdenStats(meanBurdenS, varBurdenS, μKnown=μKnown)
+    paramsEst = Dict{String, Real}(
+        "divisions" => r,
+        "μ" => μ
+    )
+    return paramsEst
+end
+
 function createTestParams(params::Dict, N::Real, p::Real)
     r = params["divisions"]
     t = params["evolve time"]
@@ -98,6 +109,10 @@ end
 
 function calcNpSpace(paramsKnown::Dict, nVarS_f, mVarsS_cid::Vector{Int}, _N, _p, lVFS::Int, vafFit::Int=1; lCont::Int=100, verbose=false)
     paramsEst = estimateRates(mVarsS_cid)
+    calcNpSpace(paramsKnown, paramsEst, nVarS_f, mVarsS_cid, _N, _p, lVFS, vafFit; lCont=lCont, verbose=verbose)
+end
+
+function calcNpSpace(paramsKnown::Dict, paramsEst::Dict, nVarS_f, mVarsS_cid::Vector{Int}, _N, _p, lVFS::Int, vafFit::Int=1; lCont::Int=100, verbose=false)
     paramsIn = merge(paramsKnown, paramsEst)
     verbose ? display(paramsIn) : nothing
     nVafTheoryFit_p_N = calcExpectedVAFs(paramsIn, _N, _p, lVFS, vafFit)

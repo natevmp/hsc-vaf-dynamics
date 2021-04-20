@@ -4,21 +4,22 @@ pyplot()
 using StatsBase
 using LaTeXStrings
 using JLD2
+using HypothesisTests
 
 ##
-include("../src/vafSim.jl")
+include("../../src/vafSim.jl")
 using .VAFSim
-include("../src/burdenDyn.jl")
+include("../../src/burdenDyn.jl")
 using .BurdenDyn
-include("../src/burdenSim.jl")
+include("../../src/burdenSim.jl")
 using .BurdenSim
-include("../src/compoundPoisson.jl")
+include("../../src/compoundPoisson.jl")
 using .CompoundPoisson
 
 ##
 
 LOADDATA = true
-SAVEFIG = true
+SAVEFIG = false
 
 
 growthRateFromNT(Nf, t) = log(Nf)/t
@@ -101,8 +102,8 @@ evolveTime=paramsTrue["evolve time"]
 ## ===== run ODE expected value evolve ======
 mMax = Int(round(2*paramsTrue["λ"]*evolveTime*paramsTrue["μ"]*3))
 ϵ = 0.0001
-@time nCellsODE_m = BurdenDyn.evolveBurdenGrowth(paramsTrue, evolveTime; growthType="exponentialToLinear")
-
+# @time nCellsODE_m = BurdenDyn.evolveBurdenGrowth(paramsTrue, evolveTime; growthType="exponentialToLinear")
+@time nCellsODE_m = BurdenDyn.evolveBurdenGrowth(paramsTrue, evolveTime, mMax, ϵ)
 
 ## ===== Data calculations =====
 
@@ -144,6 +145,7 @@ println("ODE estimated mutation rate: ", mutRateODE)
 println("average sim estimated mutation rate: ", mutRateAvSim)
 println("single sims estimated mutation rate -- mean: " , mutRateSimMean, "; std: ",  mutRateSimStd)
 println("single sims sample estimated mutation rate -- mean: " , mutRateSimSampleMean, "; std: ",  mutRateSimSampleStd)
+
 
 
 ## ========== Plot pop size over time ==========
@@ -353,3 +355,12 @@ display(pF)
 # savefig(pF, "figures/burdenODESimCompare/scBurden_detExpLin_"*string(nSims)*"sims_nI"*string(params["N initial"])*"_nF"*string(params["N final"])*".pdf")
 
 SAVEFIG ? savefig(pF, "figures/burdenODESimCompare/scBurden_detExpCap_growthTime_"*"_nF"*string(paramsTrue["N final"])*".pdf") : nothing
+
+
+
+##
+scBurdenMultSample_cid = vcat(scBurdenSample_Sim_cid...)
+scBurdenMult_cid = vcat(scBurden_Sim_cid...)
+##
+
+KSampleADTest(scBurdenMultSample_cid, cpData_id)
