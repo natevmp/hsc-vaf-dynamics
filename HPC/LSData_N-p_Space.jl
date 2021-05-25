@@ -3,21 +3,24 @@ include("../src/inferencePipeline.jl")
 using .InferencePipeline
 include("../src/theory.jl")
 using .Theory
-# include("../../src/compoundPoisson.jl")
-# using .CompoundPoisson
-
-
-
 
 # user params
+paramsInput = [
+    Dict(:tM => 3, :lVfs => 500, :Nmin => 2E4, :Nmax => 2E5),
+    Dict(:tM => 5, :lVfs => 500, :Nmin => 4E4, :Nmax => 2.5E5),
+    Dict(:tM => 8, :lVfs => 500, :Nmin => 4E4, :Nmax => 3.5E5),
+    Dict(:tM => 10, :lVfs => 500, :Nmin => 5E4, :Nmax => 4E5)
+]
 
+# current sim params
+simNum = parse(Int,ARGS[1])
+tM = paramsInput[simNum][:tM]
+lVfs = paramsInput[simNum][:lVfs]
+Nmin = paramsInput[simNum][:Nmin]
+Nmax = paramsInput[simNum][:Nmax]
 
-tM = ARGS[1]
-lVfs = [1000, 5000, 10000][parse(Int, ARGS[2])]
-
-
-##
-@load "LSDataStatsBM.jld2" sampleSize SCBurdenHSC_CID nVHSC_f
+# load data
+@load "HPC/LSDataStatsBM.jld2" sampleSize SCBurdenHSC_CID nVHSC_f
 
 μKnown = 1.2
 paramsKnown = Dict{String, Real}(
@@ -30,8 +33,8 @@ paramsKnown = Dict{String, Real}(
 paramsEst = InferencePipeline.estimateRates(SCBurdenHSC_CID, μKnown)
 
 VafFit = 1
-_NDisc = range(1E4, 2E5, length=5)
-_pDisc = range(0.1, 0.85, length=5)
+_NDisc = range(Nmin, Nmax, length=20)
+_pDisc = range(0.1, 0.9, length=20)
 
 ##
 @time _N, _p, NOptInterpol_p, vaf1ErrorInterpol_p_N = InferencePipeline.calcNpSpace(paramsKnown, paramsEst, nVHSC_f, SCBurdenHSC_CID, _NDisc, _pDisc, lVfs, VafFit; verbose=true)

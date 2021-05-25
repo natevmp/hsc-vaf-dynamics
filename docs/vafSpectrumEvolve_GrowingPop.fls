@@ -1,7 +1,7 @@
-PWD c:\Users\monper02\Documents\GitHub\hsc-vaf-dynamics\data
+PWD c:\Users\monper02\Documents\GitHub\hsc-vaf-dynamics\docs
 INPUT C:\Users\monper02\AppData\Local\MiKTeX\miktex\data\le\pdftex\pdflatex.fmt
-INPUT c:\Users\monper02\Documents\GitHub\hsc-vaf-dynamics\data\SCBurdenExtendedCP.tex
-OUTPUT c:\Users\monper02\Documents\GitHub\hsc-vaf-dynamics\data\SCBurdenExtendedCP.log
+INPUT c:\Users\monper02\Documents\GitHub\hsc-vaf-dynamics\docs\vafSpectrumEvolve_GrowingPop.tex
+OUTPUT c:\Users\monper02\Documents\GitHub\hsc-vaf-dynamics\docs\vafSpectrumEvolve_GrowingPop.log
 INPUT C:\Users\monper02\AppData\Local\Programs\MiKTeX\tex\latex\koma-script\scrartcl.cls
 INPUT C:\Users\monper02\AppData\Local\Programs\MiKTeX\tex\latex\koma-script\scrartcl.cls
 INPUT C:\Users\monper02\AppData\Local\Programs\MiKTeX\tex\latex\koma-script\scrartcl.cls
@@ -457,10 +457,10 @@ INPUT C:\Users\monper02\AppData\Local\Programs\MiKTeX\tex\latex\base\ifthen.sty
 INPUT C:\Users\monper02\AppData\Local\Programs\MiKTeX\tex\latex\base\ifthen.sty
 INPUT C:\Users\monper02\AppData\Local\Programs\MiKTeX\tex\latex\base\ifthen.sty
 INPUT C:\Users\monper02\AppData\Local\Programs\MiKTeX\tex\latex\base\ifthen.sty
-INPUT c:\Users\monper02\Documents\GitHub\hsc-vaf-dynamics\data\SCBurdenExtendedCP.aux
-INPUT c:\Users\monper02\Documents\GitHub\hsc-vaf-dynamics\data\SCBurdenExtendedCP.aux
-INPUT c:\Users\monper02\Documents\GitHub\hsc-vaf-dynamics\data\SCBurdenExtendedCP.aux
-OUTPUT c:\Users\monper02\Documents\GitHub\hsc-vaf-dynamics\data\SCBurdenExtendedCP.aux
+INPUT c:\Users\monper02\Documents\GitHub\hsc-vaf-dynamics\docs\vafSpectrumEvolve_GrowingPop.aux
+INPUT c:\Users\monper02\Documents\GitHub\hsc-vaf-dynamics\docs\vafSpectrumEvolve_GrowingPop.aux
+INPUT c:\Users\monper02\Documents\GitHub\hsc-vaf-dynamics\docs\vafSpectrumEvolve_GrowingPop.aux
+OUTPUT c:\Users\monper02\Documents\GitHub\hsc-vaf-dynamics\docs\vafSpectrumEvolve_GrowingPop.aux
 INPUT C:\Users\monper02\AppData\Local\Programs\MiKTeX\tex\context\base\mkii\supp-pdf.mkii
 INPUT C:\Users\monper02\AppData\Local\Programs\MiKTeX\tex\context\base\mkii\supp-pdf.mkii
 INPUT C:\Users\monper02\AppData\Local\Programs\MiKTeX\tex\context\base\mkii\supp-pdf.mkii
@@ -505,9 +505,9 @@ INPUT C:\Users\monper02\AppData\Local\Programs\MiKTeX\tex\latex\amsfonts\umsb.fd
 INPUT C:\Users\monper02\AppData\Local\Programs\MiKTeX\fonts\tfm\public\amsfonts\symbols\msbm10.tfm
 INPUT C:\Users\monper02\AppData\Local\Programs\MiKTeX\fonts\tfm\public\amsfonts\symbols\msbm10.tfm
 INPUT C:\Users\monper02\AppData\Local\Programs\MiKTeX\fonts\tfm\public\amsfonts\symbols\msbm7.tfm
-OUTPUT c:\Users\monper02\Documents\GitHub\hsc-vaf-dynamics\data\SCBurdenExtendedCP.pdf
+OUTPUT c:\Users\monper02\Documents\GitHub\hsc-vaf-dynamics\docs\vafSpectrumEvolve_GrowingPop.pdf
 INPUT C:\Users\monper02\AppData\Local\MiKTeX\pdftex\config\pdftex.map
-INPUT c:\Users\monper02\Documents\GitHub\hsc-vaf-dynamics\data\SCBurdenExtendedCP.aux
+INPUT c:\Users\monper02\Documents\GitHub\hsc-vaf-dynamics\docs\vafSpectrumEvolve_GrowingPop.aux
 INPUT C:\Users\monper02\AppData\Local\Programs\MiKTeX\fonts\type1\public\amsfonts\cm\cmex10.pfb
 INPUT C:\Users\monper02\AppData\Local\Programs\MiKTeX\fonts\type1\public\amsfonts\cm\cmex10.pfb
 INPUT C:\Users\monper02\AppData\Local\Programs\MiKTeX\fonts\type1\public\amsfonts\cm\cmmi12.pfb
@@ -520,3 +520,7 @@ INPUT C:\Users\monper02\AppData\Local\Programs\MiKTeX\fonts\type1\public\amsfont
 INPUT C:\Users\monper02\AppData\Local\Programs\MiKTeX\fonts\type1\public\amsfonts\cm\cmr8.pfb
 INPUT C:\Users\monper02\AppData\Local\Programs\MiKTeX\fonts\type1\public\amsfonts\cm\cmsy10.pfb
 INPUT C:\Users\monper02\AppData\Local\Programs\MiKTeX\fonts\type1\public\amsfonts\cm\cmsy10.pfb
+INPUT C:\Users\monper02\AppData\Local\Programs\MiKTeX\fonts\type1\public\amsfonts\cm\cmsy8.pfb
+INPUT C:\Users\monper02\AppData\Local\Programs\MiKTeX\fonts\type1\public\amsfonts\cm\cmsy8.pfb
+INPUT C:\Users\monper02\AppData\Local\Programs\MiKTeX\fonts\type1\public\amsfonts\symbols\msbm10.pfb
+INPUT C:\Users\monper02\AppData\Local\Programs\MiKTeX\fonts\type1\public\amsfonts\symbols\msbm10.pfb

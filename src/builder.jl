@@ -20,13 +20,17 @@ end
 """
 Create discrete probability space (DFreqspace object) from irregularly spaced probability density object (VFreqspace) through spline interpolation and scaling
 """
-function makeDFSfromVFS(vfs::VFreqspace, N::Integer)
-
-    cnSpline = Spline1D(vfs.freqs_f[2:end-1], vfs.n_f[2:end-1])
-    dfs = DFreqspace(N)
-    # for (i, f) in enumerate(dfs.freqs_f[2:end-1])
-    #     dfs.n_f[i] = cnSpline(f)/N
-    # end
-    dfs.n_f[2:end-1] .= cnSpline(dfs.freqs_f[2:end-1])/N
+function makeDFSfromVFS(vfs::VFreqspace, N::Integer; normalize=true)
+    if normalize
+        cnSpline = Spline1D(vfs.freqs_f[2:end-1], vfs.n_f[2:end-1])
+        dfs = DFreqspace(N)
+        dfs.n_f[2:end-1] .= cnSpline(dfs.freqs_f[2:end-1])/N
+    else
+        Δf_f = ( (vfs.freqs_f[3:end]-vfs.freqs_f[2:end-1]) .+ (vfs.freqs_f[2:end-1]-vfs.freqs_f[1:end-2]) )/2
+        cnSpline = Spline1D(vfs.freqs_f[2:end-1], N * vfs.n_f[2:end-1] .* Δf_f)
+        dfs = DFreqspace(N)
+        dfs.n_f[2:end-1] .= cnSpline(dfs.freqs_f[2:end-1])
+    end
     return dfs
 end
+

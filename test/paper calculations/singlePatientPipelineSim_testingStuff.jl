@@ -26,35 +26,11 @@ LOADDATA=true
 
 ## ================================== get simulation data ==================================
 
-if LOADDATA
-    # @load "./data/vafSim_50sims_Ni1_Nf2000.jld2"
-    @load "data/SinglePatientPipeline/Nf10000/singlePatientFullSim_Nf10000_sim10.jld2"
-    # @load "data/SinglePatientPipeline/singlePatientFullSim_Nf1000.jld2"
-    N_N = 500:10000:80000
-    p_p = 0.1:0.2:0.9
-else
+@load "./data/Simulations/Nf10000/singlePatientFullSim_Ni1_Nf10000_tM5_sim03.jld2" paramsTrue mSimS_cid nVarSimS_f 
 
-    # User params
-    paramsTrue = Dict{String,Real}(
-        "N initial" => 1,
-        "N final" => 500,
-        "μ" => 2.,
-        "λ" => 5.,
-        "p" => 0.5,
-        "sample size" => 100,
-        "mature time" => 15,
-        "evolve time" => 70
-    )
-    Theory.extendParams!(paramsTrue)
+N_N = range(1000, 40000, length=5)
+p_p = range(0.1, 0.9, length=5)
 
-    # Single Patient simulation
-    @time timesSim_t, nCellSim_t, nVarSim_f, nVarSimS_f, nCellSim_m, nCellSimS_m, mSim_cid, mSimS_cid = VAFSim.birthDeathFixedGrowth(paramsTrue, paramsTrue["evolve time"], 0.1, showprogress=true)
-    # filename = "data/SinglePatientPipeline/singlePatientFullSim_Nf"*string(paramsTrue["N final"])*".jld2"
-    # @save filename paramsTrue timesSim_t nCellSim_t nVarSim_f nVarSimS_f nCellSim_m nCellSimS_m mSim_cid mSimS_cid
-
-    N_N = 100:500:3000
-    p_p = 0.1:0.2:0.9
-end
 
 ## ============================== create VAF spectra ==============================
 
@@ -62,14 +38,13 @@ paramsKnown = Dict{String,Real}(
     "N initial" => 1,
     "sample size" => paramsTrue["sample size"],
     "mature time" => paramsTrue["mature time"],
-    "evolve time" => paramsTrue["evolve time"]
+    "evolve time" => paramsTrue["evolve time"],
+    "μ" => paramsTrue["μ"]
 )
-
-paramsKnown["mature time"] = 3
 
 fFit_ = [1,2,3,4,5]
 # fFit_ = [1,]
-
+lVfs = 100
 NOptInterpol_FFit_p = Vector{Float64}[]
 for fFit in fFit_
     _N, _p, NOptInterpol_p, vaf1ErrorInterpol_p_N = InferencePipeline.calcNpSpace(paramsKnown, nVarSimS_f, mSimS_cid, N_N, p_p, 500, fFit, verbose=true)

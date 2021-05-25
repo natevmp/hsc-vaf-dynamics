@@ -33,46 +33,6 @@ NOpt95L_p = NOptAv_p .- 2*NOptStd_p
 NOpt95U_p = NOptAv_p .+ 2*NOptStd_p
 
 ## ================================ Plotting ===================================
-# using Gadfly, Cairo, Fontconfig
-# import Gadfly: w, h
-# ##
-
-# myTheme = Theme(
-#     # major_label_font="CMU Serif",
-#     # minor_label_font="CMU Serif",
-#     # key_title_font="CMU Serif",
-#     # key_label_font="CMU Serif",
-#     major_label_font_size=12pt,
-#     minor_label_font_size=10pt,
-#     key_title_font_size=12pt,
-#     key_label_font_size=10pt
-#     )
-
-# Gadfly.push_theme(myTheme)
-
-# NOpts_id = vcat([vec(NOpt_sim_p[i, :]) for i in 1:nSims]...)
-# pOpts_id = vcat([_p for i in 1:nSims]...)
-# ##
-
-# layerSims = layer(
-#     x=pOpts_id, y=NOpts_id,
-#     Geom.density2d,
-#     Theme(default_color=color("black"))
-#     )
-# layerTrueVal = layer(
-#     x=[paramsTrue["p"]], y=[paramsTrue["N final"]], 
-#     Geom.point
-#     )
-
-# fig1 = plot(layerTrueVal, layerSims,
-# Guide.colorkey(title="Density", pos=[0.8w, -0.25h]),
-# Scale.color_continuous,
-# Guide.xlabel("p"),
-# Guide.ylabel("N")
-# )
-# display(fig1)
-
-# fig1 |> PDF("figures/paper/simsNpInference.pdf", 6inch, 4inch)
 
 using Plots
 pyplot(legendfontsize=10, guidefontsize=12, tickfontsize=10,  size=(600,400))

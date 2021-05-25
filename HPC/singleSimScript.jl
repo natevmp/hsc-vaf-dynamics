@@ -9,13 +9,13 @@ N = parse(Int, ARGS[2])
 
 ## ===== User params =====
 paramsTrue = Dict{String,Real}(
-    "N initial" => N,
+    "N initial" => 1,
     "N final" => N,
     "μ" => 2.0,
     "λ" => 5.0,
     "p" => 0.4,
-    "sample size" => 89,
-    "mature time" => 0,
+    "sample size" => 100,
+    "mature time" => 5,
     "evolve time" => 60
 )
 tSave = 0.1

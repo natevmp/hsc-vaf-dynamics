@@ -100,17 +100,17 @@ evolveTime=paramsTrue["evolve time"]
 
 
 ## ===== run ODE expected value evolve ======
-mMax = Int(round(2*paramsTrue["λ"]*evolveTime*paramsTrue["μ"]*3))
-ϵ = 0.0001
-# @time nCellsODE_m = BurdenDyn.evolveBurdenGrowth(paramsTrue, evolveTime; growthType="exponentialToLinear")
-@time nCellsODE_m = BurdenDyn.evolveBurdenGrowth(paramsTrue, evolveTime, mMax, ϵ)
+# mMax = Int(round(2*paramsTrue["λ"]*evolveTime*paramsTrue["μ"]*3))
+# ϵ = 0.0001
+# # @time nCellsODE_m = BurdenDyn.evolveBurdenGrowth(paramsTrue, evolveTime; growthType="exponentialToLinear")
+# @time nCellsODE_m = BurdenDyn.evolveBurdenGrowth(paramsTrue, evolveTime, mMax, ϵ)
 
 ## ===== Data calculations =====
 
 # ode mutation rate
-burdenMeanODE = sum([m*nCellsODE_m[m+1] for m in 0:length(nCellsODE_m)-1])/sum(nCellsODE_m)
-burdenVarODE = sum([m^2*nCellsODE_m[m+1] for m in 0:length(nCellsODE_m)-1])/sum(nCellsODE_m) - burdenMeanODE^2
-mutRateODE = burdenVarODE/burdenMeanODE - 1
+# burdenMeanODE = sum([m*nCellsODE_m[m+1] for m in 0:length(nCellsODE_m)-1])/sum(nCellsODE_m)
+# burdenVarODE = sum([m^2*nCellsODE_m[m+1] for m in 0:length(nCellsODE_m)-1])/sum(nCellsODE_m) - burdenMeanODE^2
+# mutRateODE = burdenVarODE/burdenMeanODE - 1
 
 # average sim mutation rate
 burdenMeanAvSim = sum([m*nCellsAvSim_m[m+1] for m in 0:length(nCellsAvSim_m)-1])/sum(nCellsAvSim_m)
@@ -141,7 +141,7 @@ mutRateSimSampleMean = mean(mutRateS_sim)
 mutRateSimSampleStd = std(mutRateS_sim)
 
 
-println("ODE estimated mutation rate: ", mutRateODE)
+# println("ODE estimated mutation rate: ", mutRateODE)
 println("average sim estimated mutation rate: ", mutRateAvSim)
 println("single sims estimated mutation rate -- mean: " , mutRateSimMean, "; std: ",  mutRateSimStd)
 println("single sims sample estimated mutation rate -- mean: " , mutRateSimSampleMean, "; std: ",  mutRateSimSampleStd)
@@ -149,38 +149,38 @@ println("single sims sample estimated mutation rate -- mean: " , mutRateSimSampl
 
 
 ## ========== Plot pop size over time ==========
-nPlots=20
+# nPlots=20
 
-# p1 = plot( times_t, (t->BurdenDyn.logisticGrowth(params["N initial"], params["N final"], params["growth rate"], t)).(times_t),
-plot1 = plot( times_t,
-    (t->BurdenDyn.exponentialCappedGrowth(paramsTrue["N initial"],paramsTrue["N final"], paramsTrue["growth rate"], t)).(times_t),
-    # (t->BurdenSim.exponentialToLinearGrowth(
-    #     paramsTrue["N initial"], 
-    #     paramsTrue["N final"], 
-    #     paramsTrue["exp growth rate"], 
-    #     paramsTrue["lin growth rate"], 
-    #     t
-    #     )).(times_t),
-    label="ode",
-    legend=:bottomright,
-    linewidth=1.5,
-    linestyle=:dash)
-plot!(times_t, nSizeAv_t,
-    label="sim",
-    linewidth=1.5,
-    linestyle=:dashdot
-    )
-plot!([paramsTrue["mature time"],], seriestype=:vline, label="", color="grey", linewidth=2)
-annotate!(paramsTrue["mature time"], 0, text(L"t_f", :bottom, :left))
-# xticks!([paramsTrue["mature time"],],[L"t_f",])
-# xticks!(0:10:paramsTrue["evolve time"])
+# # p1 = plot( times_t, (t->BurdenDyn.logisticGrowth(params["N initial"], params["N final"], params["growth rate"], t)).(times_t),
+# plot1 = plot( times_t,
+#     (t->BurdenDyn.exponentialCappedGrowth(paramsTrue["N initial"],paramsTrue["N final"], paramsTrue["growth rate"], t)).(times_t),
+#     # (t->BurdenSim.exponentialToLinearGrowth(
+#     #     paramsTrue["N initial"], 
+#     #     paramsTrue["N final"], 
+#     #     paramsTrue["exp growth rate"], 
+#     #     paramsTrue["lin growth rate"], 
+#     #     t
+#     #     )).(times_t),
+#     label="ode",
+#     legend=:bottomright,
+#     linewidth=1.5,
+#     linestyle=:dash)
+# plot!(times_t, nSizeAv_t,
+#     label="sim",
+#     linewidth=1.5,
+#     linestyle=:dashdot
+#     )
+# plot!([paramsTrue["mature time"],], seriestype=:vline, label="", color="grey", linewidth=2)
+# annotate!(paramsTrue["mature time"], 0, text(L"t_f", :bottom, :left))
+# # xticks!([paramsTrue["mature time"],],[L"t_f",])
+# # xticks!(0:10:paramsTrue["evolve time"])
 
-xlabel!("time")
-ylabel!("population size")
-# for i in 1:nPlots
-#     plot!(times_t, nSizeSimsAr_Sim_t[i], label="", legend=:topleft)
-# end
-display(plot1)
+# xlabel!("time")
+# ylabel!("population size")
+# # for i in 1:nPlots
+# #     plot!(times_t, nSizeSimsAr_Sim_t[i], label="", legend=:topleft)
+# # end
+# display(plot1)
 
 
 
@@ -188,29 +188,29 @@ display(plot1)
 ## ========== Plot burden histogram ==========
 NMature = paramsTrue["N final"]
 μTrue = paramsTrue["μ"]
-# nPlots = 50
-plot2 = plot(0:length(nCellsODE_m)-1, nCellsODE_m,
-    label="ode",
-    linewidth=2,
-    linestyle=:dash
-    )
-plot!(0:length(nCellsAvSim_m)-1, nCellsAvSim_m,
-    label="sim",
-    linewidth=2,
-    linestyle=:dashdot,
-    legend=:topleft
-    )
-annotate!(8, maximum(nCellsAvSim_m)/2, text( "var/mean - 1:\n ODE: "*string(round(mutRateODE,digits=2))*"\n Sim: "*string(round(mutRateAvSim,digits=2)), 9, :left, :top ))
-xlabel!("# mutations")
-ylabel!("# cells")
-title!("μ true = $μTrue, N mature = $NMature")
-# for sim in 10:10+nPlots
-#     plot!(0:length(nCellsSimsAr_Sim_m[sim])-1, nCellsSimsAr_Sim_m[sim],label="")
-# end
-xlims!(0,mMax/2)
-display(plot2)
+# # nPlots = 50
+# plot2 = plot(0:length(nCellsODE_m)-1, nCellsODE_m,
+#     label="ode",
+#     linewidth=2,
+#     linestyle=:dash
+#     )
+# plot!(0:length(nCellsAvSim_m)-1, nCellsAvSim_m,
+#     label="sim",
+#     linewidth=2,
+#     linestyle=:dashdot,
+#     legend=:topleft
+#     )
+# annotate!(8, maximum(nCellsAvSim_m)/2, text( "var/mean - 1:\n ODE: "*string(round(mutRateODE,digits=2))*"\n Sim: "*string(round(mutRateAvSim,digits=2)), 9, :left, :top ))
+# xlabel!("# mutations")
+# ylabel!("# cells")
+# title!("μ true = $μTrue, N mature = $NMature")
+# # for sim in 10:10+nPlots
+# #     plot!(0:length(nCellsSimsAr_Sim_m[sim])-1, nCellsSimsAr_Sim_m[sim],label="")
+# # end
+# xlims!(0,mMax/2)
+# display(plot2)
 
-SAVEFIG ? savefig(plot2, "figures/burdenODESimCompare/scBurden_detExpCap_growthTime_"*"_nF"*string(paramsTrue["N final"])*".pdf") : nothing
+# SAVEFIG ? savefig(plot2, "figures/burdenODESimCompare/scBurden_detExpCap_growthTime_"*"_nF"*string(paramsTrue["N final"])*".pdf") : nothing
 
 
 
@@ -259,10 +259,13 @@ function getEffectiveDivisions(params)
     Nf = params["N final"]
     Ni = params["N initial"]
     λEff = ϕ*t + 2γ*tM + 2ρ*t - ρ*(1/Ni - 1/Nf)/γ - ρ*(t-tM)/Nf
+    λEff = (2ρ+ϕ)*t + (exp(-γ*tM)-1)*ρ/γ + 2*log(1+exp(γ*tM)) - log(4) + 2Nf*(t-tM)*γ/(Nf+1) - (t-tM)*ρ/Nf    # this only goes for Ni=1!
     return λEff
 end
 # getEffectiveDivisions(paramsTrue)*paramsTrue["μ"]
-cpData_id = CompoundPoisson.randComPois(getEffectiveDivisions(paramsTrue), paramsTrue["μ"], 800000)
+λEff = getEffectiveDivisions(paramsTrue)
+##
+cpData_id = CompoundPoisson.randComPois(λEff, paramsTrue["μ"], 800000)
 
 ##
 plot4 = stephist(cpData_id,

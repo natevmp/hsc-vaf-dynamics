@@ -36,7 +36,7 @@ function evolveSCBurden(params::Dict, evolveTime::Number, tSaveStep::Number)
 
     while t<evolveTime
         
-        if nLive < round(nTime(t))
+        while nLive < round(nTime(t))
             # grow pop
             divCID = rand(1:nLive)
             push!(scBurden_cid, scBurden_cid[divCID])

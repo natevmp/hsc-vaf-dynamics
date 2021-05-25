@@ -1,5 +1,3 @@
-using DiffEqOperators, OrdinaryDiffEq, SparseArrays, LinearAlgebra, DifferentialEquations
-
 """Evolve fixed sized population with Moran dynamics as a continuous-time Markov Chain"""
 function evolveVAF(dfs::DFreqspace, params::Dict, t::Number; addClones::Bool=true)
     ρ = params["ρ"]
@@ -218,7 +216,9 @@ function evolveGrowingVAF(dfs::DFreqspace, params::Dict, t::Number;
     m_m = 0:Nf
     mrUp_m = zeros(Nf+1)
     mrDw_m = zeros(Nf+1)
-    function step!(dn_m, n_m, (mrUp_m, mrDw_m), t)
+    # p = (μ, ρ, ϕ, mrUp_m, mrDw_m)
+    p = (μ, ρ, ϕ, γ, nT, m_m, mrUp_m, mrDw_m)
+    function step!(dn_m, n_m, (μ, ρ, ϕ, γ, nT, m_m, mrUp_m, mrDw_m), t)
         Nind = Int(floor(nT(t))) + 1
         # Calculate frequency dependent move rate
         mrUp_m[1:Nind] .= (m->mrUp(m,nT(t))).(@view m_m[1:Nind])
@@ -233,7 +233,7 @@ function evolveGrowingVAF(dfs::DFreqspace, params::Dict, t::Number;
     # n0_m = SVector{length(n_m)}(dfs.n_f)
     n0_m = dfs.n_f
     # prob = ODEProblem(step!, n0_m, (0.0, t))
-    prob = ODEProblem(step!, n0_m, (0.0, t), (mrUp_m, mrDw_m))
+    prob = ODEProblem(step!, n0_m, (0.0, t), p)
     # alg = KenCarp4() #stable for stiff PDE
     # alg = TRBDF2(autodiff=false) #stablest for stiff PDE
     # alg = Rodas4(autodiff=false)
@@ -244,7 +244,70 @@ function evolveGrowingVAF(dfs::DFreqspace, params::Dict, t::Number;
 end
 
 """Evolve growing population VAF spectrum with Moran and pure birth dynamics"""
-function evolveGrowingVAF(vfs::VFreqspace, params::Dict, t::Real; addClones::Bool=true)
+function evolveGrowingVAF(vfs::VFreqspace, params::Dict, t::Real; addClones::Bool=true, alg=nothing, order=2, reltol=1e-6)
+    Ni = params["N initial"]
+    Nf = params["N final"]
+    μ = params["μ"]
+    ρ = params["ρ"]
+    ϕ = params["ϕ"]
+    gR = params["growth rate"]
+
+    fluxInd = findall(f->f==1/Nf, vfs.freqs_f)[1] - 1
+
+    nT(tt) = cappedExponentialGrowth(Ni, Nf, gR, tt)
+    γ(n) = cappedExpGrowthRate(n, Nf, gR)
+
+    inL = length(vfs)-2
+    dm_i = Nf * (vfs.freqs_f[2:end] .- vfs.freqs_f[1:end-1])
+    in_m = Nf * vfs.freqs_f[2:end-1]
+    
+    dϵ = (dm_i[fluxInd] + dm_i[fluxInd+1])/2 # sets intensity of flux delta function
+    BC = Dirichlet0BC(Float64) # This could be changed to a Neuman BC to obtain extinction and fixation rates
+
+    ∇ = CenteredDifference(1, order, dm_i, inL)
+    Δ = CenteredDifference(2, order, dm_i, inL)
+    c = spzeros(inL)
+    A = spzeros(inL, inL)
+    B = spzeros(inL, inL)
+    fA(m, N) = m<N ? -γ(N)*m : 0
+    fB(m, N) = m<N ? ρ*m*(1-m/N) + m*γ(N)/2 : 0
+
+    Au = similar(vfs.n_f[2:end-1])
+    Bu = similar(vfs.n_f[2:end-1])
+
+    ∇Au = similar(vfs.n_f[2:end-1])
+    ΔBu = similar(vfs.n_f[2:end-1])
+
+    function step!(du, u, (A, B, Au, Bu, ∇Au, ΔBu, c), t)
+        A[diagind(A)] .= (m -> fA(m,nT(t))).(in_m)
+        B[diagind(B)] .= (m -> fB(m,nT(t))).(in_m)
+        addClones ? c[fluxInd] = nT(t) * 2μ * ( ρ+ϕ/2+γ(nT(t)) ) / dϵ : nothing
+        mul!(Au, A, u)
+        mul!(Bu, B, u)
+        # mul!(∇Au, ∇, BC*Au)
+        # mul!(ΔBu, Δ, BC*Bu)
+        mul!(∇Au, ∇*BC, Au)
+        mul!(ΔBu, Δ*BC, Bu)
+        du .= ∇Au .+ ΔBu .+ c
+    end
+
+    t0 = 0.0
+    t1 = t
+    u0 = copy(vfs.n_f[2:end-1])
+
+    prob = ODEProblem(step!, u0, (t0, t1), (A, B, Au, Bu, ∇Au, ΔBu, c))
+
+    if isnothing(alg)
+        sol = solve(prob, save_everystep=false)
+    else
+        sol = solve(prob, alg, save_everystep=false, reltol=reltol)
+    end
+
+    vfs.n_f[2:end-1] .= sol.u[end] * Nf
+end
+
+"""Evolve growing population VAF spectrum with Moran and pure birth dynamics"""
+function evolveCloneGrowingPop(vfs::VFreqspace, params::Dict, t::Real; alg=nothing, order=2, reltol=1e-6)
     Ni = params["N initial"]
     Nf = params["N final"]
     μ = params["μ"]
@@ -256,60 +319,129 @@ function evolveGrowingVAF(vfs::VFreqspace, params::Dict, t::Real; addClones::Boo
     γ(n) = cappedExpGrowthRate(n, Nf, gR)
 
     inL = length(vfs)-2
-    dm_i = Nf * (vfs.freqs_f[2:end] .- vfs.freqs_f[1:end-1])
+    dm_m = Nf * (vfs.freqs_f[2:end] .- vfs.freqs_f[1:end-1])
     in_m = Nf * vfs.freqs_f[2:end-1]
-    
-    BC = Dirichlet0BC(Float64)
-    ∇ = CenteredDifference(1, 2, dm_i, inL)
-    Δ = CenteredDifference(2, 2, dm_i, inL)
-    c = spzeros(inL)
+
+    # fluxInd = findall(f->f==1/Nf, vfs.freqs_f)[1] - 1
+    # dϵ = (dm_m[fluxInd] + dm_m[fluxInd+1])/2 # sets intensity of flux delta function
+
+    ∇ = CenteredDifference(1, order, dm_m, inL)
+    Δ = CenteredDifference(2, order, dm_m, inL)
     A = spzeros(inL, inL)
     B = spzeros(inL, inL)
-    fA(m, N) = m<N ? -γ(N)*m : 0
-    fB(m, N) = m<N ? ρ*m*(1-m/N) + m*γ(N)/2 : 0
+    # c = spzeros(inL)
+    fA(m, N) = m<N ? - ( γ(N)*m + 2μ*(ρ+γ(N)+ϕ/2)*N*(1-m/N) ) : 0
+    fB(m, N) = m<N ? ρ*m*(1-m/N) + m*γ(N)/2 + μ*(ρ*γ(N)+ϕ/2)*N*(1-m/N) : 0
 
-    function step!(du, u, (A, B, c), t)
+    α(N) = μ*(ρ*γ(N)+ϕ/2)*N
+    fL0(N) = (α(N)+N*γ(N)-2ρ)/N
+    fL1(N) = (N*(γ(N)+2ρ)-α(N)*(N+1))/N
+    fL2(N) = α(N)/2
+    # fluxDelta(N) = 2μ*(ρ*γ(N)+ϕ/2)*N / dϵ
+
+    Au = similar(vfs.n_f[2:end-1])
+    Bu = similar(vfs.n_f[2:end-1])
+    ∇Au = similar(vfs.n_f[2:end-1])
+    ΔBu = similar(vfs.n_f[2:end-1])
+
+    BC = Dirichlet0BC(Float64) # This could be changed to a Neuman BC to obtain extinction and fixation rates
+    function step!(du, u, (A, B, Au, Bu, ∇Au, ΔBu), t)
         A[diagind(A)] .= (m -> fA(m,nT(t))).(in_m)
-        B[diagind(B)] .= (m -> fB(m,nT(t))).(in_m)
-        addClones ? c[1] = nT(t) * 2μ * ( ρ+ϕ/2+γ(nT(t)) ) / dm_i[1] : nothing
-        # du .= (((∇*BC)*DiffEqArrayOperator(A)) + ((Δ*BC)*DiffEqArrayOperator(B)))*u .+ c
-        du .= (∇*BC)*(A*u) + (Δ*BC)*(B*u) .+ c
+        B[diagind(B)] .= (m -> fB(m,nT(t))).(in_m) 
+        BC = GeneralBC([0, fL0(nT(t)), fL1(nT(t)), fL2(nT(t))], [0.,1.,0.,0.], dm_m, 2)
+        mul!(Au, A, u)
+        mul!(Bu, B, u)
+        mul!(∇Au, ∇*BC, Au)
+        mul!(ΔBu, Δ*BC, Bu)
+        du .= ∇Au .+ ΔBu
+        # du .= ∇Au .+ ΔBu .+ c
     end
 
-    t0 = 0.0
-    t1 = t
     u0 = copy(vfs.n_f[2:end-1])
 
-    prob = ODEProblem(step!, u0, (t0, t1), (A, B, c))
-    # alg = KenCarp4()
-    # alg = TRBDF2() #stablest for stiff PDE
-    # alg = BS3()
-    # sol = solve(prob, alg, save_everystep=false)
-    sol = solve(prob, save_everystep=false)
+    prob = ODEProblem(step!, u0, (0.0, t), (A, B, Au, Bu, ∇Au, ΔBu))
 
-    vfs.n_f[2:end-1] .= sol.u[end] * Nf
-end
-
-function evolveGrowingVAFHybrid(dfs::DFreqspace, params::Dict, t::Number, l::Int;
-    addClones::Bool=true, NSwitch::Int=50)
-    Ni = params["N initial"]
-    Nf = params["N final"]
-    γ = params["growth rate"]
-    t = params["evolve time"]
-
-    tSwitch = log(NSwitch) / γ
-    
-    if Nf < NSwitch || t < tSwitch
-        return evolveGrowingVAF(dfs, params, t, addClones=addClones)
+    if isnothing(alg)
+        sol = solve(prob, save_everystep=false)
+    else
+        sol = solve(prob, alg, save_everystep=false, reltol=reltol)
     end
 
-    paramsDFS = deepcopy(params)
-    paramsDFS["evolve time"] = tSwitch
-    evolveGrowingVAF(dfs, params, tSwitch, addClones=addClones)
-    
-
-
+    vfs.n_f[2:end-1] .= sol.u[end]
 end
+
+
+function evolveCloneGrowingPop(dfs::DFreqspace, params::Dict, t::Number; alg=nothing, order=2, reltol=1e-6)
+    Ni = params["N initial"]
+    Nf = params["N final"]
+    ρ = params["ρ"]
+    ϕ = params["ϕ"]
+    μ = params["μ"]
+    gR = params["growth rate"]
+
+    nT(tt) = cappedExponentialGrowth(Ni, Nf, gR, tt)
+    γ(n) = cappedExpGrowthRate(n, Nf, gR)
+
+    tUp(m,N) = m<N ? m*( 1-m/N )*ρ + m*γ(N) + 2μ*(1-m/N)*(ρ+γ(N)+ϕ/2)*N : 0
+    tDw(m,N) = m<N ? m*( 1-m/N )*ρ : 0
+    tSt(m,N) = tUp(m,N) + tDw(m,N)
+
+    T = sparse(zeros(length(dfs.n_f), length(dfs.n_f)))
+    parEvo = (nT, T)
+    function step!(dp_m, p_m, (nT, T), t)
+        Nt = Int(floor(nT(t)))
+        T[diagind(T,-1)[1:Nt]] .= tUp.(0:Nt-1, nT(t))
+        T[diagind(T)[1:Nt+1]] .= - tSt.(0:Nt, nT(t)) 
+        T[diagind(T,+1)[1:Nt]] .= tDw.(1:Nt, nT(t))
+        mul!(dp_m, T, p_m)
+    end
+
+    p0_m = dfs.n_f
+    prob = ODEProblem(step!, p0_m, (0.0, t), parEvo)
+    sol = solve(prob, save_everystep=false)
+    dfs.n_f .= sol.u[2]
+end
+
+
+function evolveCloneGrowingPopAlt(dfs::DFreqspace, params::Dict, t::Number; alg=nothing, order=2, reltol=1e-6)
+    Ni = params["N initial"]
+    Nf = params["N final"]
+    ρ = params["ρ"]
+    ϕ = params["ϕ"]
+    μ = params["μ"]
+    gR = params["growth rate"]
+
+    nT(tt) = cappedExponentialGrowth(Ni, Nf, gR, tt)
+    γ(n) = cappedExpGrowthRate(n, Nf, gR)
+
+    tUp(m,N) = m<N ? m*( 1-m/N )*ρ + m*γ(N) + 2μ*(1-m/N)*(ρ+γ(N)+ϕ/2)*N : 0
+    tDw(m,N) = m<N ? m*( 1-m/N )*ρ : 0
+    tSt(m,N) = tUp(m,N) + tDw(m,N)
+
+    T = sparse(zeros(length(dfs.n_f)-1, length(dfs.n_f)-1))
+    parEvo = (nT, T)
+    function step!(dp_m, p_m, (nT, T), t)
+        Nt = Int(floor(nT(t)))
+
+        dp_m[1] = - tSt(0, nT(t)) * p_m[1]
+        dp_m[2] = tUp(0, nT(t))*(p_m[end] + p_m[1]) - tSt(1, nT(t))*p_m[2] + tDw(2, nT(t))*p_m[3]
+        for m in 2:Nt-1
+            dp_m[1+m] = tUp(m-1, nT(t))*p_m[m] - tSt(m, nT(t))*p_m[m+1] + tDw(m+1, nT(t))*p_m[m+2]
+        end
+        dp_m[1+Nt] = tUp(Nt-1, nT(t))*p_m[Nt]
+        dp_m[end] = - tSt(0, nT(t))*p_m[end] + tDw(1, nT(t)) * p_m[2]
+    end
+
+    p0_m = append!(deepcopy(dfs.n_f), 0)
+    prob = ODEProblem(step!, p0_m, (0.0, t), parEvo)
+    sol = solve(prob, save_everystep=false)
+    # dfs.n_f .= sol.u[2]
+    return sol.u[2]
+end
+
+
+## ========== Single Cell VAF ==========
+
 
 """Evolve growing population single cell VAF spectrum with Moran and pure birth dynamics"""
 function evolveGrowingSCVAF(vfs::VFreqspace, params::Dict, t::Real; addClones::Bool=true)

@@ -11,8 +11,8 @@ using .Theory
 
 # user params
 
-tM = 5
-lVfs = 1000
+tM = 3
+lVfs = 500
 
 
 ##
@@ -28,6 +28,8 @@ paramsKnown = Dict{String, Real}(
 # paramsEst = InferencePipeline.estimateRates(SCBurdenHSC_CID)
 paramsEst = InferencePipeline.estimateRates(SCBurdenHSC_CID, μKnown)
 
+paramsIn = InferencePipeline.createTestParams(merge(paramsKnown, paramsEst), 200000, 0.5)
+
 ##
 # cpVals_id = CompoundPoisson.randComPois(paramsEst["divisions"], paramsEst["μ"], 50000)
 # ##
@@ -37,9 +39,9 @@ paramsEst = InferencePipeline.estimateRates(SCBurdenHSC_CID, μKnown)
 
 ##
 
-VafFit = 2
-_NDisc = range(5E4, 2E5, length=5)
-_pDisc = range(0.1, 0.85, length=5)
+VafFit = 1
+_NDisc = range(1E4, 3.5E5, length=8)
+_pDisc = range(0.1, 0.85, length=8)
 
 ##
 @time _N, _p, NOptInterpol_p, vaf1ErrorInterpol_p_N = InferencePipeline.calcNpSpace(paramsKnown, paramsEst, nVHSC_f, SCBurdenHSC_CID, _NDisc, _pDisc, lVfs, VafFit; verbose=true)
@@ -47,17 +49,17 @@ _pDisc = range(0.1, 0.85, length=5)
 
 ##
 
-filename = "./LSData_NPSpaceInference_tM"*string(tM)*"_lVFS"*string(lVfs)*".jld2"
-@save filename _N _p NOptInterpol_p
+# filename = "./LSData_NPSpaceInference_tM"*string(tM)*"_lVFS"*string(lVfs)*".jld2"
+# @save filename _N _p NOptInterpol_p
 
 ##
-# using Plots
-# pyplot()
+using Plots
+pyplot()
 
-# fig1 = plot(_p, NOptInterpol_p, label="vaf fit:"*string(VafFit))
-# xlabel!("p")
-# ylabel!("N")
-# title!("vfsL = "*string(lVfs))
+fig1 = plot(_p, NOptInterpol_p, label="vaf fit:"*string(VafFit))
+xlabel!("p")
+ylabel!("N")
+title!("vfsL = "*string(lVfs))
 
-# display(fig1)
-# savefig(fig1, "NP_fit"*string(VafFit)*".pdf")
+display(fig1)
+savefig(fig1, "NP_fit"*string(VafFit)*".pdf")

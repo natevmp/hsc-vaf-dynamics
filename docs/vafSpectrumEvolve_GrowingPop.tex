@@ -1,0 +1,78 @@
+\documentclass[pdftex,12pt,a4paper]{scrartcl}
+\usepackage[english]{babel}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{physics}
+\usepackage{amsmath}
+\usepackage{xfrac}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{placeins}
+\usepackage{color}
+\usepackage{nicefrac}
+\newcommand\ddfrac[2]{\frac{\displaystyle #1}{\displaystyle #2}}
+\newcommand{\opn}[1]{\operatorname{#1}}
+\newcommand{\E}{\operatorname{E}}
+\newcommand{\Var}{\operatorname{Var}}
+% \renewcommand{\P}{\mathbb{P}}
+\renewcommand{\P}[2]{\mathbb{P} \left\lbrace #1 \mid #2 \right\rbrace}
+
+\begin{document}
+
+Denoting clone sizes in prevalance (i.e. absolute number of cells), we obtain the follwing transition probabilities for a single clone:
+\begin{equation}
+\left\lbrace
+    \begin{aligned}
+        &\P{m+1, t+\Delta t}{m, t} = \frac{m}{N(t)}\qty(1 - \frac{m}{N(t)})\rho N(t)\Delta t + \frac{m}{N(t)}\gamma N(t)\Delta t\\
+        &\P{m-1, t+\Delta t}{m, t} = \frac{m}{N(t)}\qty(1 - \frac{m}{N(t)})\rho N(t)\Delta t \\
+        &\P{m, t+\Delta t}{m, t} = 1 - \P{m+1, t+\Delta t}{m, t} - \P{m-1, t+\Delta t}{m, t}
+    \end{aligned}
+\right.
+\end{equation}
+Moving to a continuous prevalence picture, the FP equation is given by
+\begin{equation}
+    \partial_t p(m,t) = -\partial_m A(m,t) p(m,t) + \partial_m^2 B(m,t)p(m,t)/2
+\end{equation} 
+where $A(m,t)$ and $B(m,t)$ are given by
+\begin{align}
+    A(m,t) = \lim_{\Delta t \rightarrow 0} \ev{\Delta m}_{\Delta t} / \Delta t \\
+    B(m,t) = \lim_{\Delta t \rightarrow 0} \ev{\Delta m^2}_{\Delta t} / \Delta t
+\end{align}
+Using the above defined transition probabilities these become
+\begin{align}
+    A(m,t) = m \gamma
+\end{align}
+and
+\begin{align}
+    B(m,t) = 2 m \qty[1 - m/N \! (t) ]\rho + m \gamma
+\end{align}
+Thus the FP equation becomes
+\begin{equation}\label{eq:FPSingleGrowth}
+    \partial_t p(m,t) = -\partial_m \gamma m \, p(m,t) + \partial_m^2 \qty[m(1-m/N)\rho + m \gamma/2] \, p(m,t).
+\end{equation}
+Note that if there is no growth, i.e. $\gamma = 0$, this reduces to
+\begin{equation}\label{eq:FPMoran}
+    \pdv{t} p(m,t) = \rho N \pdv[2]{m} \frac{m}{N}\qty(1-\frac{m}{N}) \, p(m,t)
+\end{equation}
+which reduces to the standard Moran Fokker-Planck equation upon performing the transformation $x(m) = m/N$.
+
+To obtain the expression for the expected prevalence spectrum $v(m,t)$ we must still add the flux of incoming variants, so that finally we have
+\begin{equation}\label{eq:FPVafGrowth}
+    \begin{aligned}
+        \partial_t v(m,t) = -\partial_m \gamma m \, v(m,t) + \partial_m^2 \qty[m(1-m/N)\rho + m \gamma/2] \, v(m,t) &\\
+        + 2\mu( \rho + \gamma + \phi/2 )\delta( m-1 ) &
+    \end{aligned}
+\end{equation}
+
+While the solution to (\ref{eq:FPMoran}) is known, it is rather unwieldly, which does not bode well for the more complex expressions (\ref{eq:FPSingleGrowth}) and (\ref{eq:FPVafGrowth}). We will here use numerical approximations of their solution, though to obtain these we must be cautious about the singularity at $\partial_t v(m=1, t)$ introduced by the incoming flux. We applied a method of lines approach with a finite difference discretization in the frequency coordinate. In order to optimize performance, we opted for a variable stepsize which is smallest near the singularity, with the distances in prevalence space given by
+\begin{equation}
+    \Delta m_i = 1 + (i-1)\cdot \alpha_i
+\end{equation}
+where $i \in 1, \dots, l-1$, with $l$ the number of discretized points, and
+\begin{equation}
+    \alpha_i = 2\frac{N-(l-1)}{(l-1)(l-2)}
+\end{equation}
+In this formalism the delta function in (\ref{eq:FPVafGrowth}) is approximated as a step function with height $2/(\Delta m_1 + \Delta m_2)$.
+
+\end{document}

@@ -1,16 +1,15 @@
 #!/bin/bash
 #$ -pe smp 1
-#$ -l h_vmem=4G
-#$ -l h_rt=24:0:0
+#$ -l h_vmem=20G
+#$ -l h_rt=48:0:0
 #$ -wd ~/HSCDynamics
 #$ -j y
 #$ -N LSDataNP
 #$ -o ~/HSCDynamics
+#$ -m beas
 #$ -t 1-3
 
 module load julia
-
-tM=5
 
 SRCDIR=$HOME/HSCDynamics/
 DATADIR=$HOME/HSCDynamics/data/
@@ -24,7 +23,7 @@ cd $TMPDIR
 echo "starting julia script..."
 
 # julia HPC/addPackages.jl
-julia HPC/LSData_N-p_Space.jl $tM ${SGE_TASK_ID}
+julia HPC/LSData_N-p_Space.jl ${SGE_TASK_ID}
 
 # rsync -rltv $TMPDIR/ $DATADIR/
 mv LSData_NPSpaceInference_tM*.jld2 $DATADIR/

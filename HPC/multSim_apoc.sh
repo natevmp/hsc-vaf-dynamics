@@ -1,7 +1,7 @@
 #!/bin/bash
 #$ -pe smp 1
 #$ -l h_vmem=18G
-#$ -l h_rt=24:0:0
+#$ -l h_rt=240:0:0
 #$ -wd ~/HSCDynamics
 #$ -j y
 #$ -N somaticMoranMultSimulations
@@ -10,7 +10,7 @@
 
 module load julia
 
-Nf=10000
+Nf=1000
 
 SRCDIR=$HOME/HSCDynamics/
 DATADIR=$HOME/HSCDynamics/data/Nf$Nf

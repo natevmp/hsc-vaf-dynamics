@@ -1,0 +1,47 @@
+\documentclass[pdftex,12pt,a4paper]{scrartcl}
+\usepackage[english]{babel}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{physics}
+\usepackage{amsmath}
+\usepackage{xfrac}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{placeins}
+\usepackage{color}
+\usepackage{nicefrac}
+\newcommand\ddfrac[2]{\frac{\displaystyle #1}{\displaystyle #2}}
+\newcommand{\opn}[1]{\operatorname{#1}}
+\newcommand{\E}{\operatorname{E}}
+\newcommand{\Var}{\operatorname{Var}}
+\renewcommand{\P}{\mathbb{P}}
+
+
+\begin{document}
+
+The number of mutations carried by a single cell is given by the sum over all mutations occurring during each of its past divisions:
+\begin{equation}
+    m = \sum_i^l u_i
+\end{equation}
+Without making any assumptions about the distributions of the number of past divisions $l$ and the number of mutations per division $u$, The expected value of $m$ can easily be found from the law of total expectation
+\begin{equation}
+    \E (m) = \E(l) \E(u)
+\end{equation}
+and the variance of $m$ can be written through the law of total variance
+\begin{align}
+    \Var(m) &= \E(l) \Var(u) + \E(u)^2 \Var(l)
+\end{align}
+Now we introduce the fact that the number of mutations per division are Poisson distributed with parameter $\mu$ (i.e. $\E(u) = \Var(u) = \mu$) and
+subtract the mean from the variance:
+\begin{align*}
+    \Var(m) - \E(m) &= \mu^2 \Var(l) \\
+    \Rightarrow \frac{\Var(m) - \E(m)}{\E(m)} &= \mu \frac{\Var(l)}{\E(l)}
+\end{align*}
+so finally we can find the mutation rate from
+\begin{equation}
+    \mu = \qty( \frac{\Var(m)}{\E(m)} - 1 ) \frac{\E(l)}{\Var(l)}
+\end{equation}
+If the number of divisions is Poisson distributed, then $\E(l) = \Var(l)$ so that $\mu = \Var(m)/\E(m) -1$. This is the compound Poisson estimate which we will denote as $\tilde{\mu}$. If we take the $\mu=1.2$ as true, then the CPD estimate $\tilde{\mu}$ gives an indication of how the system dynamics differ from the Poisson model. In particular, if $\tilde{\mu} < \mu$ then we must have $\Var(l) < \E(l)$, which could be an indication of the existence memory in the system, for example in the form of divisions occurring according to a timed cell cycle. Conversely, if $\tilde{\mu} > \mu$, we have $\Var(l) > \E(l)$, which implies that various lineages actually divided far more or far less than what would be appropriate for a memoryless system. Interestingly, the latter observation need not be at odds with current knowledge of stem cell dynamics, as the possibility of a quiescence state -- which cells enter and exist according to some complex dynamics -- could potentially lead to overdispersion compared to the Poisson model.
+\end{document}
+

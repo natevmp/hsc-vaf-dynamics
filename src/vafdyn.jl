@@ -2,8 +2,8 @@ module VAFDyn
 
 export DFreqspace, CFreqspace, VFreqspace
 
-using StaticArrays, HypergeometricFunctions, Distributions, Dierckx
-using DiffEqOperators, OrdinaryDiffEq, SparseArrays, LinearAlgebra
+using SparseArrays, LinearAlgebra, StaticArrays, HypergeometricFunctions, Distributions, Dierckx
+using DifferentialEquations, DiffEqOperators, OrdinaryDiffEq
 # using PyCall
 # scp = pyimport("scipy.special")
 # stat = pyimport("scipy.stats")
@@ -50,6 +50,20 @@ function VFreqspace(N::Integer, l::Integer)
     n_f = zeros(Float64, l)
     VFreqspace(freqs_f, n_f)
 end
+
+# function VFreqspace(N::Integer, l::Integer, ind1::Integer=1)
+#     # freqs_f = (i -> 1/N+a*i).()
+#     # freqs_f = Array{Float64, 1}(undef, l)
+#     freqs_f = zeros(Float64, l)
+#     freqs_f[1] = 0
+#     a = 2 * ( N-(l-1) )/( N*(l-1)*(l-2) )
+#     df_m = [1/N + (i-1)*a for i in 1:l-1]
+#     for m in 1:l-1
+#         freqs_f[1+m] = sum(df_m[1:m])
+#     end
+#     n_f = zeros(Float64, l)
+#     VFreqspace(freqs_f, n_f)
+# end
 
 Base.length(vfs::VFreqspace) = length(vfs.freqs_f)
 

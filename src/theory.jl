@@ -3,6 +3,7 @@ module Theory
 export extendParams!, getλFromTotalDivisions
 
 expGrowthRateFromNT(Nf, t) = log(Nf)/t
+expGrowthRateFromNT(Ni, Nf, t) = log(Nf/Ni)/t
 
 function extendParams!(params::Dict)
     params["ρ"] = params["λ"]*(1-params["p"])

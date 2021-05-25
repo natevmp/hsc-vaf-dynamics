@@ -108,7 +108,11 @@ end
 # =================== Full Pipeline ===================
 
 function calcNpSpace(paramsKnown::Dict, nVarS_f, mVarsS_cid::Vector{Int}, _N, _p, lVFS::Int, vafFit::Int=1; lCont::Int=100, verbose=false)
-    paramsEst = estimateRates(mVarsS_cid)
+    if haskey(paramsKnown, "μ")
+        paramsEst = estimateRates(mVarsS_cid, paramsKnown["μ"])
+    else
+        paramsEst = estimateRates(mVarsS_cid)
+    end
     calcNpSpace(paramsKnown, paramsEst, nVarS_f, mVarsS_cid, _N, _p, lVFS, vafFit; lCont=lCont, verbose=verbose)
 end
 
@@ -121,15 +125,14 @@ function calcNpSpace(paramsKnown::Dict, paramsEst::Dict, nVarS_f, mVarsS_cid::Ve
     return NCont_N, pCont_p, NOptInterpol_p, vaf1ErrorInterpol_p_N
 end
 
-
-function calcNpSpaceMultPopDistribution(_N, _p, paramsTrue, nVS_Pop_f, nVS_Pop_cid, lVFS; verbose=false)
+function calcNpSpaceMultPopDistribution(_N, _p, paramsKnown, nVS_Pop_f, nVS_Pop_cid, lVFS, vafFit::Int=1; verbose=false)
     nPops = length(nVS_Pop_f)
     lCont = 100
     NOpt_sim_p = Array{Float64}(undef, nPops, lCont)
-    NCont_N, pCont_p, NOptInterpol_p, ___ = calcNpSpace(paramsTrue, nVS_Pop_f[1], nVS_Pop_cid[1], _N, _p, lVFS; lCont, verbose=verbose)
+    NCont_N, pCont_p, NOptInterpol_p, ___ = calcNpSpace(paramsKnown, nVS_Pop_f[1], nVS_Pop_cid[1], _N, _p, lVFS, vafFit; lCont=lCont, verbose=verbose)
     NOpt_sim_p[1, :] = NOptInterpol_p
     @showprogress for sim in 2:nPops
-        NCont_N, pCont_p, NOptInterpol_p, ___ = calcNpSpace(paramsTrue, nVS_Pop_f[sim], nVS_Pop_cid[sim], _N, _p, lVFS; lCont, verbose=verbose)
+        NCont_N, pCont_p, NOptInterpol_p, ___ = calcNpSpace(paramsKnown, nVS_Pop_f[sim], nVS_Pop_cid[sim], _N, _p, lVFS, vafFit; lCont=lCont, verbose=verbose)
         NOpt_sim_p[sim, :] = NOptInterpol_p
     end
     # NOptAv_p = vec(mean(NOpt_sim_p, dims=1))

@@ -1,7 +1,7 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.22 (MiKTeX 21.3) (preloaded format=pdflatex 2021.4.19)  19 APR 2021 12:11
+This is pdfTeX, Version 3.141592653-2.6-1.40.22 (MiKTeX 21.3) (preloaded format=pdflatex 2021.4.19)  11 MAY 2021 17:09
 entering extended mode
-**c:/Users/monper02/Documents/GitHub/hsc-vaf-dynamics/data/SCBurdenExtendedCP.tex
-(c:/Users/monper02/Documents/GitHub/hsc-vaf-dynamics/data/SCBurdenExtendedCP.tex
+**c:/Users/monper02/Documents/GitHub/hsc-vaf-dynamics/docs/vafSpectrumEvolve_GrowingPop.tex
+(c:/Users/monper02/Documents/GitHub/hsc-vaf-dynamics/docs/vafSpectrumEvolve_GrowingPop.tex
 LaTeX2e <2020-10-01> patch level 4
 L3 programming layer <2021-02-18> (C:\Users\monper02\AppData\Local\Programs\MiKTeX\tex/latex/koma-script\scrartcl.cls
 Document Class: scrartcl 2021/03/17 v3.33 KOMA-Script document class (article)
@@ -373,8 +373,8 @@ Package: nicefrac 1998/08/04 v0.9b Nice fractions
 \L@UnitsRaiseScriptstyle=\skip69
  (C:\Users\monper02\AppData\Local\Programs\MiKTeX\tex/latex/base\ifthen.sty
 Package: ifthen 2014/09/29 v1.1c Standard LaTeX ifthen package (DPC)
-)) (c:/Users\monper02\Documents\GitHub\hsc-vaf-dynamics\data\SCBurdenExtendedCP.aux)
-\openout1 = `SCBurdenExtendedCP.aux'.
+)) (c:/Users\monper02\Documents\GitHub\hsc-vaf-dynamics\docs\vafSpectrumEvolve_GrowingPop.aux)
+\openout1 = `vafSpectrumEvolve_GrowingPop.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 21.
 LaTeX Font Info:    ... okay on input line 21.
@@ -423,19 +423,19 @@ LaTeX Font Info:    Trying to load font information for U+msb on input line 24.
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 ) [1
 
-{C:/Users/monper02/AppData/Local/MiKTeX/pdftex/config/pdftex.map}] (c:/Users\monper02\Documents\GitHub\hsc-vaf-dynamics\data\SCBurdenExtendedCP.aux) ) 
+{C:/Users/monper02/AppData/Local/MiKTeX/pdftex/config/pdftex.map}] [2] (c:/Users\monper02\Documents\GitHub\hsc-vaf-dynamics\docs\vafSpectrumEvolve_GrowingPop.aux) ) 
 Here is how much of TeX's memory you used:
- 8314 strings out of 479321
- 157222 string characters out of 2855152
- 597022 words of memory out of 3000000
- 25682 multiletter control sequences out of 15000+600000
+ 8317 strings out of 479321
+ 157379 string characters out of 2855152
+ 601078 words of memory out of 3000000
+ 25685 multiletter control sequences out of 15000+600000
  408075 words of font info for 45 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 111i,9n,116p,10697b,270s stack positions out of 5000i,500n,10000p,200000b,80000s
-<C:/Users/monper02/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmex10.pfb><C:/Users/monper02/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi12.pfb><C:/Users/monper02/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi8.pfb><C:/Users/monper02/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr12.pfb><C:/Users/monper02/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr8.pfb><C:/Users/monper02/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy10.pfb>
-Output written on c:/Users\monper02\Documents\GitHub\hsc-vaf-dynamics\data\SCBurdenExtendedCP.pdf (1 page, 62031 bytes).
+ 111i,10n,116p,10707b,270s stack positions out of 5000i,500n,10000p,200000b,80000s
+<C:/Users/monper02/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmex10.pfb><C:/Users/monper02/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi12.pfb><C:/Users/monper02/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi8.pfb><C:/Users/monper02/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr12.pfb><C:/Users/monper02/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr8.pfb><C:/Users/monper02/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy10.pfb><C:/Users/monper02/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy8.pfb><C:/Users/monper02/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/symbols/msbm10.pfb>
+Output written on c:/Users\monper02\Documents\GitHub\hsc-vaf-dynamics\docs\vafSpectrumEvolve_GrowingPop.pdf (2 pages, 81829 bytes).
 PDF statistics:
- 30 PDF objects out of 1000 (max. 8388607)
+ 41 PDF objects out of 1000 (max. 8388607)
  0 named destinations out of 1000 (max. 500000)
  1 words of extra memory for PDF output out of 10000 (max. 10000000)
 
