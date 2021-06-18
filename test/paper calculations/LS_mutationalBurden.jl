@@ -19,13 +19,12 @@ SCBurdenHSC_CID = load("data/LSDataStatsBM.jld2", "SCBurdenHSC_CID")
 
 ##
 paramsEst = InferencePipeline.estimateRates(SCBurdenHSC_CID)
-
-##
-cpVals_id = CompoundPoisson.randComPois(paramsEst["divisions"], paramsEst["μ"], 50000)
+cpVals_id = CompoundPoisson.randComPois(paramsEst1["divisions"], paramsEst1["μ"], 50000)
 ##
 
 figTest = histogram(SCBurdenHSC_CID, normalize=true, bins=25)
-stephist!(cpVals_id, normalize=true)
+stephist!(cpVals1_id, normalize=true)
+stephist!(cpVals2_id, normalize=true)
 display(figTest)
 
 ##

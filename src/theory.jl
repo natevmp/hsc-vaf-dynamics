@@ -49,9 +49,12 @@ function getλFromTotalDivisions(params::Dict)
     Ni = params["N initial"]
     p = params["p"]
     γ = expGrowthRateFromNT(params["N final"], params["mature time"])
+    Np = params["pure births"]
+    tP = Np > 0 ? log(Np)/γ : 0
 
-    λ = (r - 2log(Nf)) / 
-        ( p*t + (1-p)*( (2-1/Nf)*t + tM/Nf - (Nf/Ni-1)/(Nf*γ) ) )
+    λ = ( r + log(4) - 2*log(Nf+1) ) / 
+    ( (2-p)*(t-tP) - (1-p)*(t-tM)/Nf - (1-p)*( exp(-γ*tP)-1/Nf )/γ )
+
     return λ
 end
 

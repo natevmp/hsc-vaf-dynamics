@@ -9,12 +9,14 @@ using .VAFDyn
 include("../../src/theory.jl")
 using .Theory
 
-SAVEPLOTS = true
+SAVEPLOTS = false
 
 ## =============== Load data ===============
 # --------- sim VAF data ---------
 
-fileNames_ = glob("singlePatientFullSim_Ni*.jld2", "./data/SinglePatientPipeline/Nf10000")
+# fileNames_ = glob("singlePatientFullSim_Ni10000_Nf*.jld2", "./data/Simulations/Nf10000")
+fileNames_ = glob("singlePatientFullSim_Ni1_Nf*.jld2", "./data/Simulations/Nf10000")
+
 nSims = length(fileNames_)
 println(nSims)
 @load fileNames_[1] paramsTrue timesSim_ nCellSim_t
@@ -26,26 +28,37 @@ for (i,fName) in enumerate(fileNames_)
     nVS_sim_f[i, :] .= nVarSimS_f
 end
 
-# --------- pred VAF data ---------
-filenameVAFDyn = "data/SinglePatientPipeline/Nf"*string(paramsTrue["N final"])*"/vafDynGrowth_N"*string(paramsTrue["N final"])*".jld2"
-@load filenameVAFDyn dfs dfsS dfsPDE dfsPDES
-
 # Get averaged vaf spectra
 nVAv_f = sum(nV_sim_f, dims=1)/nSims
 nVSAv_f = sum(nVS_sim_f, dims=1)/nSims
 
+## --------- pred VAF data ---------
+# filenameVAFDyn = "data/Simulations/Nf10000/vafDynGrowth_N"*string(paramsTrue["N final"])*".jld2"
+# @load filenameVAFDyn dfs dfsS dfsPDE dfsPDES
+
+# dfsMC = VAFDyn.DFreqspace(paramsTrue["N final"])
+# VAFDyn.evolveGrowingVAF(dfsMC, paramsTrue, paramsTrue["evolve time"])
+
+##
+vfs = VAFDyn.VFreqspace(paramsTrue["N final"], 500)
+VAFDyn.evolveGrowingVAF(vfs, paramsTrue, paramsTrue["evolve time"])
+dfs = VAFDyn.makeDFSfromVFS(vfs, paramsTrue["N final"])
+dfsS = VAFDyn.sampler(dfs, paramsTrue["sample size"])
+
+
+
 
 ## ======================= Plotting =======================
 pyplot(legendfontsize=10, guidefontsize=12, tickfontsize=10,  size=(500,400))
-simTestID = 3
+simTestID = 5
 
 freqs_f = (0:paramsTrue["N final"]) / paramsTrue["N final"]
 freqsS_f = (0:paramsTrue["sample size"]) / paramsTrue["sample size"]
 
 ## ---------- complete ---------
-# fig1 = plot(yscale=:log10)
-fig1 = plot(yscale=:log10, xscale=:log10)
-plot!(freqs_f[2:end], nV_sim_f[1, 2:end],
+fig1 = plot(yscale=:log10)
+# fig1 = plot(yscale=:log10, xscale=:log10)
+plot!(freqs_f[2:end], nV_sim_f[simTestID, 2:end],
 # linewidth=0,
 # linetype=:steppre,
 # linetype=:steppost,
@@ -131,32 +144,180 @@ display(fig2)
 fig3 = plot(fig1, fig2, layout=2, size=(900, 400))
 display(fig3)
 # SAVEPLOTS && savefig(fig3, "figures/paper/simsVAFSpectrumTrueVsSample.pdf")
-SAVEPLOTS && savefig(fig3, "figures/paper/simsVAFSpectrumTrueVsSampleLogLog.pdf")
+# SAVEPLOTS && savefig(fig3, "figures/paper/simsVAFSpectrumTrueVsSampleLogLog.pdf")
 
 
 
+## ============== Cumulative VAF ======================
 
+nVCum_sim_f = zeros(size(nV_sim_f))
+for simID in 1:size(nV_sim_f,1)
+    nVCum_sim_f[simID, 2:end-1] = [sum(@view nV_sim_f[simID, i:end-1]) for i in 2:size(nV_sim_f,2)-1]
+end
+##
+nVCumVar_f = zeros(size(nV_sim_f,2))
+nVCumAv_f = zeros(size(nV_sim_f,2))
+for fI in 2:(size(nV_sim_f,2)-1)
+    nVCumVar_f[fI] = var(nVCum_sim_f[:,fI])
+    nVCumAv_f[fI] = mean(nVCum_sim_f[:,fI])
+end
+##
 
+simId = 7
+nVCum_f = [sum(@view nV_sim_f[simId, i:end-1]) for i in 2:size(nV_sim_f,2)-1]
+nVAvCum_f = [sum(@view nVAv_f[i:end-1]) for i in 2:length(nVAv_f)-1]
+nVExp_f = [sum(dfs.n_f[i:end-1]) for i in 2:length(dfs.n_f)-1]
+nVCumStdUp = nVCumAv_f .+ sqrt.(nVCumVar_f)
+nVCumStdDw = nVCumAv_f .- sqrt.(nVCumVar_f)
+# nVExpMC_f = [sum(dfsMC.n_f[i:end-1]) for i in 2:length(dfsMC.n_f)-1]
 
-## ===== GADFLY TESTING =====
-# fig1data = layer(x=freqs_f[2:end], y=nV_sim_f[simTestID, 2:end],
-# Geom.bar,
-# Theme(default_color=color("deepskyblue"))
+## ---------- complete ---------
+# fig1 = plot(yscale=:log10)
+# fig1 = plot(yscale=:log10)
+fig1 = plot(yscale=:log10, legend=:topright,ylims=(10^-0,10^7))
+# fig1 = plot(legend=:topright)
+
+# for simId in 10:15
+#     nVCum_f = [sum(@view nV_sim_f[simId, i:end-1]) for i in 2:size(nV_sim_f,2)-1]
+#     plot!(freqs_f[2:end-1], nVCum_f,
+#         markerstrokewidth=0,
+#         fillcolor=:match,
+#         label="single simulation"
+#     )
+# end
+plot!(freqs_f[2:end-1], nVAvCum_f,
+color=:grey35,
+linealpha=1,
+label="simulations average")
+plot!(freqs_f[2:end-1], nVExp_f,
+color=:black,
+linestyle=:dash,
+label="predicted average"
+)
+plot!(freqs_f[2:end-1], nVCumStdUp[2:end-1],
+linestyle=:dash,
+label="standard deviation"
+)
+plot!(freqs_f[2:end-1], nVCumStdUp[2:end-1],
+linestyle=:dashdot,
+color=:grey55,
+label="standard deviation"
+)
+plot!(freqs_f[2:end-1], nVCumStdDw[2:end-1],
+linestyle=:dashdot,
+color=:grey55,
+# label="standard deviation"
+)
+# plot!(freqs_f[2:end-1], nVExpMC_f,
+# color=:black,
+# linestyle=:dashdot,
+# label="predicted average"
 # )
-# fig1dataAv = layer(x=freqs_f[2:end], y=nVAv_f[2:end],
-# Geom.smooth(method=:loess,smoothing=0.001),
-# Theme(default_color=color("grey40"))
+title!("growing population (1 -> 10'000)")
+# xlims!(0,0.25)
+# ylims!(0,200)
+# ylims!(10^-0,10^7)
+# xlims!(0,0.1)
+xlabel!("Variant allele frequency")
+ylabel!("Number of variants < f")
+# xlims!(1/paramsTrue["N final"],1)
+display(fig1)
+
+figname = "cumulativeVAF_growingN_linlin.pdf"
+savefig(fig1, figname)
+
+## ============= Sampled ================
+
+simId = 7
+nVSCum_f = [sum(@view nVS_sim_f[simId, i:end-1]) for i in 2:size(nVS_sim_f,2)-1]
+nVSAvCum_f = [sum(@view nVSAv_f[i:end-1]) for i in 2:length(nVAv_f)-1]
+nVSExp_f = [sum(dfsS.n_f[i:end-1]) for i in 2:length(dfsS.n_f)-1]
+# nVExpMC_f = [sum(dfsMC.n_f[i:end-1]) for i in 2:length(dfsMC.n_f)-1]
+
+## ---------- sample ---------
+# fig1 = plot(yscale=:log10)
+fig1 = plot(yscale=:log10)
+# fig1 = plot(yscale=:log10, xscale=:log10, legend=:bottomleft)
+# fig1 = plot()
+
+for simId in 10:15
+    nVCum_f = [sum(@view nVS_sim_f[simId, i:end-1]) for i in 2:size(nVS_sim_f,2)-1]
+    plot!(freqsS_f[2:end-1], nVSCum_f,
+        markerstrokewidth=0,
+        fillcolor=:match,
+        label="single simulation"
+    )
+end
+plot!(freqsS_f[2:end-1], nVSAvCum_f,
+color=:grey35,
+linealpha=1,
+label="simulations average")
+plot!(freqsS_f[2:end-1], nVSExp_f,
+color=:black,
+linestyle=:dash,
+label="predicted average"
+)
+# plot!(freqs_f[2:end-1], nVExpMC_f,
+# color=:black,
+# linestyle=:dashdot,
+# label="predicted average"
 # )
-# fig1ev = layer(x=freqs_f[2:end], y=dfs.n_f[2:end],
-# Geom.line,
-# Theme(default_color=color("black"), line_style=[:dash])
+title!("growing population (1 -> 10'000)")
+xlims!(0,0.25)
+ylims!(10^-0,10^7)
+xlabel!("Variant allele frequency")
+ylabel!("Number of variants < f")
+xlims!(1/paramsTrue["N final"],1)
+display(fig1)
+
+## ============ Sample v True =============
+
+fig3 = plot(yscale=:log10)
+fig3 = plot(yscale=:log10, xscale=:log10, legend=:bottomleft)
+# fig3 = plot()
+
+# for simId in 10:15
+#     nVCum_f = [sum(@view nVS_sim_f[simId, i:end-1]) for i in 2:size(nVS_sim_f,2)-1]
+#     plot!(freqsS_f[2:end-1], nVSCum_f,
+#         markerstrokewidth=0,
+#         fillcolor=:match,
+#         label="single simulation"
+#     )
+# end
+plot!(freqs_f[2:end-1], nVAvCum_f,
+color=1,
+linealpha=1,
+label="true population average")
+# plot!(freqs_f[2:end-1], nVExp_f,
+# color=1,
+# linestyle=:dash,
+# label="predicted average"
 # )
 
-# fig1 = plot(fig1ev, fig1dataAv, fig1data,
-# Scale.y_log10,
-# Coord.cartesian(xmin=0, xmax=1, ymin=0.1, ymax=5),
-# Guide.xlabel("VAF"),
-# Guide.ylabel("number of variants"),
-# Guide.manual_color_key("", ["I'm blue l1", "I'm red l2", "I'm green l3"], ["deepskyblue", "grey40", "black"])
+plot!(freqsS_f[2:end-1], nVSAvCum_f,
+color=2,
+linealpha=1,
+label="sampled population average")
+# plot!(freqsS_f[2:end-1], nVSExp_f,
+# color=2,
+# linestyle=:dash,
+# label="predicted average"
 # )
-# display(fig1)
+
+# plot!(freqs_f[2:end-1], nVExpMC_f,
+# color=:black,
+# linestyle=:dashdot,
+# label="predicted average"
+# )
+title!("growing population (1 -> 10'000)")
+xlims!(0,0.25)
+ylims!(10^-0,10^7)
+xlabel!("Variant allele frequency")
+ylabel!("Number of variants < f")
+xlims!(1/paramsTrue["N final"],1)
+display(fig3)
+
+figname = "cumulativeVAF_TrueVSample.pdf"
+savefig(fig3, figname)
+##
+

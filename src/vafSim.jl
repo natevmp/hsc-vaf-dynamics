@@ -933,20 +933,18 @@ function birthDeathFixedGrowth(params::Dict, tStop::Real, tSaveStep::Union{Real,
 	while t < tStop
 
 		# ===== growth =====
-		if round(nTime(t)) > nLive
-			for i in round(nTime(t)) - nLive
-				# choose individual cell for symmetric division
-				divCID = rand(1:nLive)
-				# increase population
-				nLive += 1
-				newCID = nLive
-				# add copy of self-renewing cell ID to mutation matrix
-				muts_loc_cell[:, newCID] = muts_loc_cell[:, divCID]
-				mutPrevs_loc += muts_loc_cell[:, newCID]
-				# randomly mutate daughters with on average μ mutations
-				mLive += mutateCell!(muts_loc_cell, mutPrevs_loc, mLive, divCID, μ)
-				mLive += mutateCell!(muts_loc_cell, mutPrevs_loc, mLive, newCID, μ)
-			end
+		while round(nTime(t)) > nLive
+			# choose individual cell for symmetric division
+			divCID = rand(1:nLive)
+			# increase population
+			nLive += 1
+			newCID = nLive
+			# add copy of self-renewing cell ID to mutation matrix
+			muts_loc_cell[:, newCID] = muts_loc_cell[:, divCID]
+			mutPrevs_loc += muts_loc_cell[:, newCID]
+			# randomly mutate daughters with on average μ mutations
+			mLive += mutateCell!(muts_loc_cell, mutPrevs_loc, mLive, divCID, μ)
+			mLive += mutateCell!(muts_loc_cell, mutPrevs_loc, mLive, newCID, μ)
 		end
 
 		# ===== Poisson events =====

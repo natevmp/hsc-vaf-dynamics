@@ -11,9 +11,9 @@ using .Theory
 
 # user params
 
-tM = 3
+tM = 10
 lVfs = 500
-
+_nPure = [0, 10, 30, 60, 100, 500]
 
 ##
 @load "data/LSDataStatsBM.jld2" sampleSize SCBurdenHSC_CID nVHSC_f
@@ -23,12 +23,15 @@ paramsKnown = Dict{String, Real}(
     "evolve time" => 59,
     "N initial" => 1,
     "sample size" => sampleSize,
-    "mature time" => tM
+    "mature time" => tM,
+    "pure births" => _nPure[6],
 )
 # paramsEst = InferencePipeline.estimateRates(SCBurdenHSC_CID)
 paramsEst = InferencePipeline.estimateRates(SCBurdenHSC_CID, μKnown)
-
-paramsIn = InferencePipeline.createTestParams(merge(paramsKnown, paramsEst), 200000, 0.5)
+testPars = merge(paramsKnown,paramsEst)
+testPars["N final"] = 2E4
+testPars["p"] = 0.4
+Theory.getλFromTotalDivisions(testPars)
 
 ##
 # cpVals_id = CompoundPoisson.randComPois(paramsEst["divisions"], paramsEst["μ"], 50000)
@@ -40,8 +43,8 @@ paramsIn = InferencePipeline.createTestParams(merge(paramsKnown, paramsEst), 200
 ##
 
 VafFit = 1
-_NDisc = range(1E4, 3.5E5, length=8)
-_pDisc = range(0.1, 0.85, length=8)
+_NDisc = range(1E4, 3.5E5, length=4)
+_pDisc = range(0.1, 0.85, length=4)
 
 ##
 @time _N, _p, NOptInterpol_p, vaf1ErrorInterpol_p_N = InferencePipeline.calcNpSpace(paramsKnown, paramsEst, nVHSC_f, SCBurdenHSC_CID, _NDisc, _pDisc, lVfs, VafFit; verbose=true)
@@ -62,4 +65,4 @@ ylabel!("N")
 title!("vfsL = "*string(lVfs))
 
 display(fig1)
-savefig(fig1, "NP_fit"*string(VafFit)*".pdf")
+# savefig(fig1, "NP_fit"*string(VafFit)*".pdf")

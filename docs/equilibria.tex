@@ -1,0 +1,95 @@
+\documentclass[pdftex,12pt,a4paper]{scrartcl}
+\usepackage[english]{babel}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{physics}
+\usepackage{amsmath}
+\usepackage{xfrac}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{placeins}
+\usepackage{color}
+\usepackage{nicefrac}
+\newcommand\ddfrac[2]{\frac{\displaystyle #1}{\displaystyle #2}}
+\newcommand{\opn}[1]{\operatorname{#1}}
+\newcommand{\E}{\operatorname{E}}
+\newcommand{\Var}{\operatorname{Var}}
+% \renewcommand{\P}{\mathbb{P}}
+\renewcommand{\P}[2]{\mathbb{P} \left\lbrace #1 \mid #2 \right\rbrace}
+
+
+\begin{document}
+
+\section{VAF spectrum of the pure-birth process}
+In a pure-birth process every cell divides independently with exponentially distributed times between divisions at rate $\gamma$. If the population size is $1$ at time $t=0$, the expected size of the population at time $t$ is $N(t) = e^{\gamma t}$. Allowing mutations to occur during division at rate $\mu$ per daughter, we investigate the expected number of variants at each prevalence in the population. Denote $V_k(t)$ the expected number of variants with size $k$ (i.e. found in $k$ cells) at time $t$. In an infinitesimal time step, the expected number of variants moving from prevalence $k > 1$ to $k+1$ is given by $k/N(t) \cdot \gamma N(t) \dd{t}$. Furthermore, the expected number of variants entering the system at state $k=1$ due to mutations is $2\mu \gamma N(t) \dd{t}$. Thus the expected variation of $V_k(t)$ is given by the master equation
+\begin{equation}
+    \left\lbrace
+    \begin{aligned}
+        \dv{V_1(t)}{t} &= - \gamma V_1(t) + 2\mu \gamma N(t) \\
+        \dv{V_k(t)}{t} &= -k \gamma V_k(t) + (k-1) \gamma V_{k-1}(t)
+    \end{aligned}
+    \right.
+\end{equation}
+The first state can be immediately solved to obtain
+\begin{equation}
+    V_{1}(t) = \mu ( e^{\gamma t} - e^{-\gamma t} )
+\end{equation}
+On the other hand, for any state $k$ we have
+\begin{equation}
+    V_k(t) = (k-1) \gamma e^{-k \gamma t} \int_0^t e^{k \gamma t'} V_{k-1}(t') \dd{t'}
+\end{equation}
+Thus, integrating iteratively gives
+\begin{equation}
+    \begin{aligned}
+        V_k(t) &= \mu (k-1)! \, \gamma^{k-1} e^{-k \gamma t} \\
+        & \quad \times \int_{0}^{t_{k-1}} \! \dd{t_{k-1}} \int_{0}^{t_{k-2}} \! \dd{t_{k-2}} \, \dots \int_{0}^{t_1} \! \dd{t_1} \, e^{\gamma t_{k-1}} e^{\gamma t_{k-2}} \cdots e^{\gamma t_{1}} (e^{2\gamma t_1}-1)        
+    \end{aligned}
+\end{equation}
+It can be shown (At this point I just read it off Mathematica... :-p) that this results in
+\begin{equation}
+    V_k(t) = \frac{2\mu}{k^2 + k} (N(t)-1)^k \qty( \frac{k}{N(t)^k} + \frac{N(t)}{N(t)^k} )
+\end{equation}
+In the limit of large $k$ this becomes
+\begin{equation}
+    V_k(t) \approx \frac{2\mu}{k^2+k} \qty(N(t)+k)
+\end{equation}
+We can check to see if this result is properly normalized by checking whether
+\begin{equation}
+    \sum_{k=1}^N V_k = \int_0^t 2\mu \gamma N(t) \dd{t} = 2\mu N(t)
+\end{equation}
+Mathematica tells me this is true in the limit of large $N$ but I haven't quite been able to show this yet...
+
+\section{Normalization with respect to total number of variants}
+
+For a population subject to pure birth dynamics, we have that the VAP spectrum $V_k(t)$ (number of variants at each prevalence) is in equilibrium if normalized by the number of variants with prevalence $1$:
+\begin{equation}
+    \frac{V_k(t)}{V_1(t)} = \frac{2}{k^2+k}
+\end{equation}
+We can find the non-normalized $V_k(t)$ by finding the value of $V_1(t)$. To this end we use the fact that the sum over all states $k$ must equal the total number of mutations that are in the system at time $t$
+
+\begin{equation}
+    V_1(t) \sum_{k=1}^N \frac{2}{k^2+k} = \int_0^t 2 \mu \gamma N(t) dt
+\end{equation}
+To simplify the LHS we move from prevalences to frequency space (VAF spectrum) $v_{k/N} = V_{k}$, and note the we are working in the limit of large $N$
+\begin{align}
+    V_1(t) \sum_{k=1}^N \frac{2}{k^2+k} &= v_{1/N} \sum_{f=1/N}^{1} \frac{1}{N} \frac{2}{Nf^2 + f} \\
+    &\approx v_{1/N} \int_{1/N   }^1 df \, \frac{2}{Nf^2 + f} \\
+    &= v_{1/N} \, 2 \log \qty[ \frac{2N}{1+N} ] \\
+    &\approx v_{1/N} \, 2 \log(2)
+\end{align}
+Meanwhile, performing the integration on the RHS gives
+\begin{align}
+    \int_0^t 2 \mu \gamma N(t) dt &= 2\mu \qty(e^{\gamma t} - 1) \\
+    &\approx 2\mu N(t)
+\end{align}
+So that we obtain
+\begin{equation}
+    v_{1/N(t)}(t) = \frac{\mu N(t)}{\log (2)}
+\end{equation}
+And thus for any state $f$
+\begin{equation}
+    v_f(t) = \frac{2\mu}{N(t) f^2 + f} \frac{1}{\log (2)}
+\end{equation}
+
+\end{document}

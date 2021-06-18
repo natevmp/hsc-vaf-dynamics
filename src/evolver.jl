@@ -216,7 +216,6 @@ function evolveGrowingVAF(dfs::DFreqspace, params::Dict, t::Number;
     m_m = 0:Nf
     mrUp_m = zeros(Nf+1)
     mrDw_m = zeros(Nf+1)
-    # p = (μ, ρ, ϕ, mrUp_m, mrDw_m)
     p = (μ, ρ, ϕ, γ, nT, m_m, mrUp_m, mrDw_m)
     function step!(dn_m, n_m, (μ, ρ, ϕ, γ, nT, m_m, mrUp_m, mrDw_m), t)
         Nind = Int(floor(nT(t))) + 1
@@ -232,14 +231,12 @@ function evolveGrowingVAF(dfs::DFreqspace, params::Dict, t::Number;
     end
     # n0_m = SVector{length(n_m)}(dfs.n_f)
     n0_m = dfs.n_f
-    # prob = ODEProblem(step!, n0_m, (0.0, t))
     prob = ODEProblem(step!, n0_m, (0.0, t), p)
     # alg = KenCarp4() #stable for stiff PDE
     # alg = TRBDF2(autodiff=false) #stablest for stiff PDE
     # alg = Rodas4(autodiff=false)
     # sol = solve(prob, save_everystep=false, maxiters=5e4, autodiff=false)
     sol = solve(prob, save_everystep=false)
-    # println(sol.alg)
     dfs.n_f .= sol.u[2]
 end
 
@@ -248,14 +245,18 @@ function evolveGrowingVAF(vfs::VFreqspace, params::Dict, t::Real; addClones::Boo
     Ni = params["N initial"]
     Nf = params["N final"]
     μ = params["μ"]
-    ρ = params["ρ"]
-    ϕ = params["ϕ"]
+    Np = params["pure births"]
+    ρ(n) = n<Np ? 0 : params["ρ"]
+    ϕ(n) = n<Np ? 0 : params["ϕ"]
     gR = params["growth rate"]
 
-    fluxInd = findall(f->f==1/Nf, vfs.freqs_f)[1] - 1
-
-    nT(tt) = cappedExponentialGrowth(Ni, Nf, gR, tt)
+    # nT(tt) = cappedExponentialGrowth(Ni, Nf, gR, tt)
+    nT(tt) = round(cappedExponentialGrowth(Ni, Nf, gR, tt))
     γ(n) = cappedExpGrowthRate(n, Nf, gR)
+
+    fluxInd = findall(f->f==1/Nf, vfs.freqs_f)[1] - 1
+    # fluxAmp(n) = n * 2μ * ( ρ*(1-1/(2*n)) + ϕ/2 + γ(n)*(1-1/(n+1)) )
+    fluxAmp(n) = n * 2μ * ( ρ(n)*(1-1/(2*n)) + ϕ(n)/2 + γ(n) )
 
     inL = length(vfs)-2
     dm_i = Nf * (vfs.freqs_f[2:end] .- vfs.freqs_f[1:end-1])
@@ -270,7 +271,7 @@ function evolveGrowingVAF(vfs::VFreqspace, params::Dict, t::Real; addClones::Boo
     A = spzeros(inL, inL)
     B = spzeros(inL, inL)
     fA(m, N) = m<N ? -γ(N)*m : 0
-    fB(m, N) = m<N ? ρ*m*(1-m/N) + m*γ(N)/2 : 0
+    fB(m, N) = m<N ? ρ(N)*(1-1/(2N))*m*(1-m/N) + m*γ(N)/2 : 0
 
     Au = similar(vfs.n_f[2:end-1])
     Bu = similar(vfs.n_f[2:end-1])
@@ -281,7 +282,7 @@ function evolveGrowingVAF(vfs::VFreqspace, params::Dict, t::Real; addClones::Boo
     function step!(du, u, (A, B, Au, Bu, ∇Au, ΔBu, c), t)
         A[diagind(A)] .= (m -> fA(m,nT(t))).(in_m)
         B[diagind(B)] .= (m -> fB(m,nT(t))).(in_m)
-        addClones ? c[fluxInd] = nT(t) * 2μ * ( ρ+ϕ/2+γ(nT(t)) ) / dϵ : nothing
+        addClones ? c[fluxInd] = fluxAmp(nT(t)) / dϵ : nothing
         mul!(Au, A, u)
         mul!(Bu, B, u)
         # mul!(∇Au, ∇, BC*Au)
@@ -383,6 +384,7 @@ function evolveCloneGrowingPop(dfs::DFreqspace, params::Dict, t::Number; alg=not
     γ(n) = cappedExpGrowthRate(n, Nf, gR)
 
     tUp(m,N) = m<N ? m*( 1-m/N )*ρ + m*γ(N) + 2μ*(1-m/N)*(ρ+γ(N)+ϕ/2)*N : 0
+    # tUp(m,N) = m<N ? m*( 1-m/N )*ρ + m*γ(N) : 0
     tDw(m,N) = m<N ? m*( 1-m/N )*ρ : 0
     tSt(m,N) = tUp(m,N) + tDw(m,N)
 
@@ -414,6 +416,7 @@ function evolveCloneGrowingPopAlt(dfs::DFreqspace, params::Dict, t::Number; alg=
     nT(tt) = cappedExponentialGrowth(Ni, Nf, gR, tt)
     γ(n) = cappedExpGrowthRate(n, Nf, gR)
 
+    # tUp(m,N) = m<N ? m*( 1-m/N )*ρ + m*γ(N) : 0
     tUp(m,N) = m<N ? m*( 1-m/N )*ρ + m*γ(N) + 2μ*(1-m/N)*(ρ+γ(N)+ϕ/2)*N : 0
     tDw(m,N) = m<N ? m*( 1-m/N )*ρ : 0
     tSt(m,N) = tUp(m,N) + tDw(m,N)

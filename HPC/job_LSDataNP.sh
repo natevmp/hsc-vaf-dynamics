@@ -7,7 +7,7 @@
 #$ -N LSDataNP
 #$ -o ~/HSCDynamics
 #$ -m beas
-#$ -t 1-3
+#$ -t 1-4
 
 module load julia
 
