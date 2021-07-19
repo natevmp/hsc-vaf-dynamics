@@ -16,63 +16,99 @@
 \newcommand{\E}{\operatorname{E}}
 \newcommand{\Var}{\operatorname{Var}}
 % \renewcommand{\P}{\mathbb{P}}
-\renewcommand{\P}[2]{\mathbb{P} \left\lbrace #1 \mid #2 \right\rbrace}
+\renewcommand{\P}[2]{\mathbb{P} \! \left\lbrace #1 \, \mid \, #2 \right\rbrace }
 
 \begin{document}
+\subsection{VAF spectrum dynamics}
+To obtain the dynamics of the VAF spectrum we first consider the probabilistic dynamics of the size of a single variant in the population. In particular we wish to find a Fokker-Plank equation for the time evolution of the probability density of the variant's size. We first sketch the procedure for obtaining a well-known result for the Moran model, after which we show how to obtain the expression for a stochastically growing population.
 
-Denoting clone sizes in prevalance (i.e. absolute number of cells), we obtain the follwing transition probabilities for a single clone:
+\subsubsection{Single variant Moran dynamics}
+In the Moran model the discrete probability distribution of the size of a variant is governed by the transition probabilities $\mathbb{P}\! \left\lbrace l \middle\vert k \right\rbrace$ denoting the likelihood of the variant changing from size $k$ to $l$ after the occurrence of a symmetric division event. These take the tridiagonal form:
+\begin{equation}
+\left\lbrace
+\begin{aligned}
+\P{k+1}{k} &= \frac{k}{N} \qty( 1- \frac{k}{N} ) = T_{k+1,k} = T_k\\
+\P{k-1}{k} &= \frac{k}{N} \qty( 1- \frac{k}{N} ) = T_{k-1,k} = T_k\\
+\P{k}{k} &= 1 - (T_{k+1,k} + T_{k-1,k})
+\end{aligned}
+\right.
+\end{equation}
+Assuming events occur with exponentially distributed waiting times at rate $\nu$, the probability distribution of the variant's size $P_k$ can be described through the master equation
+\begin{equation}
+    \frac{1}{\nu} \dv{P_k}{t} = T_{k-1} P_{k-1} +  -2T_k P_k + T_{k+1}P_{k+1}
+\end{equation}
+For large population sizes this system of $N$ differential equations can be computational taxing to solve. A diffusion approximation can be made on the assumption that $N$ is large (i.e. there are many states $k=0, 1, \dots, N$), which describes $p(\kappa)$ the probability density of the variant size on the continuous domain $\kappa \in [ 0, N ]$. To this end a Fokker-Planck equation is constructed of the form
+\begin{equation}
+    \partial_t p(\kappa,t) = -\partial_\kappa A(\kappa,t) p(\kappa, t) + \partial_\kappa^2 B(\kappa,t)p(\kappa, t)/2
+\end{equation}
+The coefficients are given through the infinitesimal propagator $t(\kappa + \Delta \kappa, t+\Delta t \, \vert \, \kappa, t)$:
+\begin{equation}
+    \begin{aligned}
+        A(\kappa, t) &= \lim_{\Delta t \rightarrow 0} \frac{1}{\Delta t} \int \! d(\Delta \kappa) \Delta \kappa \, t(\kappa+\Delta \kappa, t+\Delta t \, \vert \, \kappa, t) \\
+        B(\kappa, t) &= \lim_{\Delta t \rightarrow 0} \frac{1}{\Delta t} \int \! d(\Delta \kappa) (\Delta \kappa)^2 \, t(\kappa+\Delta \kappa, t+\Delta t \, \vert \, \kappa, t)
+    \end{aligned}
+\end{equation}
+The integrals are the first and second moments of a displacement $\Delta \kappa$, and can be obtained using the heuristic:
+\begin{equation}
+    \begin{aligned}
+    \ev{\Delta \kappa}_{k, \Delta t} &\approx \ev{\Delta \kappa}_{k, 1/\eta} \Delta t + \vartheta\qty(\Delta t^2) = \sum_{\Delta k} \Delta k \, T_{k+\Delta k,k} \, \eta \, \Delta t + \vartheta\qty(\Delta t^2) \\
+    \ev{(\Delta \kappa^2)}_{k, \Delta t} &\approx \ev{(\Delta \kappa^2)}_{k, 1/\eta} \Delta t + \vartheta\qty(\Delta t^2) = \sum_{\Delta k} (\Delta k)^2 \, T_{k+\Delta k,k} \, \eta \, \Delta t + \vartheta\qty(\Delta t^2) 
+    \end{aligned}
+\end{equation}
+Typically a transformation to frequency space is performed -- $ f = \kappa / N$ -- so that we obtain
+\begin{align}
+    A(f, t) = 0, \quad B(f, t) = \frac{2\nu}{N^2} f(1-f)
+\end{align}
+and thus
+\begin{equation}\label{eq:FPMoran}
+    \partial_t p(f,t) = (\nu / N^2) \, \partial_f^2 f(1-f) p(f,t) 
+\end{equation}
+
+\subsubsection{Moran dynamics with growth}
+We now consider a population in which there are Moran divisions -- a self-renewal simultaneously accompanied by a loss or differentiation -- occurring at rate $\rho N(t)$, as well as additional divisions which increase the population at rate $\gamma N(t)$. For simplicity we assume the population size $N(t)$ to grow deterministically according to the growth rate. The transition probabilies for a single clone are given by
 \begin{equation}
 \left\lbrace
     \begin{aligned}
-        &\P{m+1, t+\Delta t}{m, t} = \frac{m}{N(t)}\qty(1 - \frac{m}{N(t)})\rho N(t)\Delta t + \frac{m}{N(t)}\gamma N(t)\Delta t\\
-        &\P{m-1, t+\Delta t}{m, t} = \frac{m}{N(t)}\qty(1 - \frac{m}{N(t)})\rho N(t)\Delta t \\
-        &\P{m, t+\Delta t}{m, t} = 1 - \P{m+1, t+\Delta t}{m, t} - \P{m-1, t+\Delta t}{m, t}
+        &\P{k+1, t+\Delta t}{k, t} = \frac{k}{N(t)}\qty(1 - \frac{k}{N(t)})\rho N(t)\Delta t + \frac{k}{N(t)}\gamma N(t)\Delta t\\
+        &\P{k-1, t+\Delta t}{k, t} = \frac{k}{N(t)}\qty(1 - \frac{k}{N(t)})\rho N(t)\Delta t \\
+        &\P{k, t+\Delta t}{k, t} = 1 - \P{k+1, t+\Delta t}{k, t} - \P{k-1, t+\Delta t}{k, t}
     \end{aligned}
 \right.
 \end{equation}
-Moving to a continuous prevalence picture, the FP equation is given by
+Using the previously described heuristic the coefficients of the Fokker-Planck equation become
 \begin{equation}
-    \partial_t p(m,t) = -\partial_m A(m,t) p(m,t) + \partial_m^2 B(m,t)p(m,t)/2
-\end{equation} 
-where $A(m,t)$ and $B(m,t)$ are given by
-\begin{align}
-    A(m,t) = \lim_{\Delta t \rightarrow 0} \ev{\Delta m}_{\Delta t} / \Delta t \\
-    B(m,t) = \lim_{\Delta t \rightarrow 0} \ev{\Delta m^2}_{\Delta t} / \Delta t
-\end{align}
-Using the above defined transition probabilities these become
-\begin{align}
-    A(m,t) = m \gamma
-\end{align}
-and
-\begin{align}
-    B(m,t) = 2 m \qty[1 - m/N \! (t) ]\rho + m \gamma
-\end{align}
-Thus the FP equation becomes
-\begin{equation}\label{eq:FPSingleGrowth}
-    \partial_t p(m,t) = -\partial_m \gamma m \, p(m,t) + \partial_m^2 \qty[m(1-m/N)\rho + m \gamma/2] \, p(m,t).
-\end{equation}
-Note that if there is no growth, i.e. $\gamma = 0$, this reduces to
-\begin{equation}\label{eq:FPMoran}
-    \pdv{t} p(m,t) = \rho N \pdv[2]{m} \frac{m}{N}\qty(1-\frac{m}{N}) \, p(m,t)
-\end{equation}
-which reduces to the standard Moran Fokker-Planck equation upon performing the transformation $x(m) = m/N$.
-
-To obtain the expression for the expected prevalence spectrum $v(m,t)$ we must still add the flux of incoming variants, so that finally we have
-\begin{equation}\label{eq:FPVafGrowth}
     \begin{aligned}
-        \partial_t v(m,t) = -\partial_m \gamma m \, v(m,t) + \partial_m^2 \qty[m(1-m/N)\rho + m \gamma/2] \, v(m,t) &\\
-        + 2\mu( \rho + \gamma + \phi/2 )\delta( m-1 ) &
+        A(\kappa,t) &= \kappa \gamma \\
+        B(\kappa,t) &= 2 \kappa \qty[1 - \kappa/N ]\rho + \kappa \gamma
     \end{aligned}
 \end{equation}
+And the full equation becomes
+\begin{equation}\label{eq:FPSingleGrowth}
+    \partial_t p(\kappa,t) = -\partial_\kappa \gamma \kappa \, p(\kappa,t) + \partial_\kappa^2 \qty[\kappa(1-\kappa/N)\rho + \kappa \gamma/2] \, p(\kappa,t).
+\end{equation}
+Note that if there is no growth, i.e. $\gamma = 0$, this reduces to the standard Moran Fokker-Planck equation upon performing the transformation $f(\kappa) = \kappa/N$.
 
-While the solution to (\ref{eq:FPMoran}) is known, it is rather unwieldly, which does not bode well for the more complex expressions (\ref{eq:FPSingleGrowth}) and (\ref{eq:FPVafGrowth}). We will here use numerical approximations of their solution, though to obtain these we must be cautious about the singularity at $\partial_t v(m=1, t)$ introduced by the incoming flux. We applied a method of lines approach with a finite difference discretization in the frequency coordinate. In order to optimize performance, we opted for a variable stepsize which is smallest near the singularity, with the distances in prevalence space given by
+\subsubsection{VAF spectrum dynamics}
+To obtain the dynamics of the spectrum of variants $v(\kappa,t)$ -- i.e. the number of variants per size -- we simply note that for independently evolving mutants the fluxes between states are identical to the above-derived transition probabilities. We however still require a flux of newly arising variants, which is limited to the state $k=1$
+and has amplitude
 \begin{equation}
-    \Delta m_i = 1 + (i-1)\cdot \alpha_i
+    \mathcal{C} = 2\mu (\rho + \gamma + \phi/2)
 \end{equation}
-where $i \in 1, \dots, l-1$, with $l$ the number of discretized points, and
+where asymmetric divisions occurring at rate $\phi$ only introduce half as many varants into the population. In the continuous domain we introduce this flux as a Dirac delta function, so that the complete expression then takes the form
+\begin{equation}\label{eq:FPVafGrowth}
+    \begin{aligned}
+        \partial_t v(\kappa,t) = -\partial_\kappa \gamma \kappa \, v(\kappa,t) + \partial_\kappa^2 \qty[\kappa(1-\kappa/N)\rho + \kappa \gamma/2] \, v(\kappa,t) &\\
+        + 2\mu( \rho + \gamma + \phi/2 )\delta( \kappa-1 ) &
+    \end{aligned}
+\end{equation}
+While a solution to (\ref{eq:FPMoran}) is known, it is rather unwieldy, which does not bode well for the more complex expressions (\ref{eq:FPSingleGrowth}) and (\ref{eq:FPVafGrowth}). We will here use numerical approximations of their solution, though to obtain these we must be cautious about the discontinuity at $\partial_t v(\kappa=1, t)$ introduced by the incoming flux. We applied a method of lines approach with a finite difference discretization in the size coordinate $\kappa$. In order to optimize performance, we opted for a variable stepsize which is smallest near the singularity, with the distances in space given by
 \begin{equation}
-    \alpha_i = 2\frac{N-(l-1)}{(l-1)(l-2)}
+    \Delta \kappa_i = 1 + (i-1)\cdot \alpha_i
 \end{equation}
-In this formalism the delta function in (\ref{eq:FPVafGrowth}) is approximated as a step function with height $2/(\Delta m_1 + \Delta m_2)$.
+where $i \in 1, \dots, n-1$, with $n$ the number of discretized points, and
+\begin{equation}
+    \alpha_i = 2\frac{N-(n-1)}{(n-1)(n-2)}
+\end{equation}
+In this formalism the delta function in (\ref{eq:FPVafGrowth}) is approximated as a step function with height $2/(\Delta \kappa_1 + \Delta \kappa_2)$.
 
 \end{document}

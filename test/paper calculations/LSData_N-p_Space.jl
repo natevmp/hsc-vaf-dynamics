@@ -11,12 +11,29 @@ using .Theory
 
 # user params
 
-tM = 10
-lVfs = 500
-_nPure = [0, 10, 30, 60, 100, 500]
+paramsInput = [
+    Dict(:nPure => 500, :tM => 10, :lVfs => 500, :Nmin => 5E3, :Nmax => 2E5),
+    Dict(:nPure => 100, :tM => 10, :lVfs => 500, :Nmin => 5E3, :Nmax => 2E5),
+    Dict(:nPure => 60, :tM => 10, :lVfs => 500, :Nmin => 5E3, :Nmax => 2E5),
+    Dict(:nPure => 30, :tM => 10, :lVfs => 500, :Nmin => 5E3, :Nmax => 3E5),
+    Dict(:nPure => 10, :tM => 10, :lVfs => 500, :Nmin => 5E3, :Nmax => 4E5),
+    Dict(:nPure => 0, :tM => 10, :lVfs => 500, :Nmin => 5E3, :Nmax => 4E5),
+]
+
 
 ##
-@load "data/LSDataStatsBM.jld2" sampleSize SCBurdenHSC_CID nVHSC_f
+
+# current sim params
+simNum = 6
+nPure = paramsInput[simNum][:nPure]
+tM = paramsInput[simNum][:tM]
+lVfs = paramsInput[simNum][:lVfs]
+Nmin = paramsInput[simNum][:Nmin]
+Nmax = paramsInput[simNum][:Nmax]
+
+
+## load data
+@load "HPC/LSDataStatsBM.jld2" sampleSize SCBurdenHSC_CID nVHSC_f
 
 μKnown = 1.2
 paramsKnown = Dict{String, Real}(
@@ -24,36 +41,25 @@ paramsKnown = Dict{String, Real}(
     "N initial" => 1,
     "sample size" => sampleSize,
     "mature time" => tM,
-    "pure births" => _nPure[6],
+    "pure births" => nPure
 )
 # paramsEst = InferencePipeline.estimateRates(SCBurdenHSC_CID)
 paramsEst = InferencePipeline.estimateRates(SCBurdenHSC_CID, μKnown)
-testPars = merge(paramsKnown,paramsEst)
-testPars["N final"] = 2E4
-testPars["p"] = 0.4
-Theory.getλFromTotalDivisions(testPars)
-
-##
-# cpVals_id = CompoundPoisson.randComPois(paramsEst["divisions"], paramsEst["μ"], 50000)
-# ##
-# figTest = histogram(SCBurdenHSC_CID, normalize=true, bins=25)
-# stephist!(cpVals_id, normalize=true)
-# display(figTest)
-
-##
 
 VafFit = 1
-_NDisc = range(1E4, 3.5E5, length=4)
-_pDisc = range(0.1, 0.85, length=4)
+_NDisc = range(Nmin, Nmax, length=8)
+_pDisc = range(0.05, 0.99, length=4)
 
 ##
 @time _N, _p, NOptInterpol_p, vaf1ErrorInterpol_p_N = InferencePipeline.calcNpSpace(paramsKnown, paramsEst, nVHSC_f, SCBurdenHSC_CID, _NDisc, _pDisc, lVfs, VafFit; verbose=true)
 
 
 ##
+# filename = "./LSData_NPSpaceInference_tM"*string(tM)*"_lVFS"*string(lVfs)*"_pureGrowth"*string(nPure)*".jld2"
+# paramsTot = merge(paramsKnown, paramsEst)
+# @save filename _N _p NOptInterpol_p paramsTot
 
-# filename = "./LSData_NPSpaceInference_tM"*string(tM)*"_lVFS"*string(lVfs)*".jld2"
-# @save filename _N _p NOptInterpol_p
+# println("succes")
 
 ##
 using Plots

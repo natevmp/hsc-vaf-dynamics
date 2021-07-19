@@ -66,6 +66,22 @@ function calcExpectedVAFs(paramsIn::Dict, _N::AbstractArray, _p::AbstractArray, 
     return nVafFit_p_N
 end
 
+function findZeroErrorPoint(nVafTheoryfit_N, nVafDataFit::Int, _N)
+    vaf1Error_N = (nVafTheoryfit_N .- nVafDataFit)/nVafDataFit
+    vaf1ErrorInterpol_N = Spline1D(_N, vaf1Error_N)
+    Nopt = try
+        find_zero(n->vaf1ErrorInterpol_N(n), (_N[1],_N[end]), Bisection())
+    catch e
+        println("error: no zero found between "*string(_N[1])*" and "*string(_N[end])*".")
+        if vaf1ErrorInterpol_N(_N[end]) < 0
+            _N[end]
+        else
+            _N[1]
+        end
+    end
+    return Nopt
+end
+
 # ---------- get interpolated solutions ----------
 function findZeroErrorLine(nVafTheoryfit_p_N, nVafDataFit::Int, _N, _p; l::Int=100, verbose=false)
     
