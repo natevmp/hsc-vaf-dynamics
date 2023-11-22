@@ -1,6 +1,7 @@
 module CompoundPoisson
 
 using Random, Distributions
+export randComPois
 
 export randComPois
 

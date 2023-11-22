@@ -1,16 +1,16 @@
 #!/bin/bash
 #$ -pe smp 1
 #$ -l h_vmem=18G
-#$ -l h_rt=24:0:0
+#$ -l h_rt=240:0:0
 #$ -wd ~/HSCDynamics
 #$ -j y
 #$ -N somaticMoranMultSimulations
 #$ -o ~/HSCDynamics
-#$ -t 1-100
+#$ -t 1-99
 
 module load julia
 
-Nf=10000
+Nf=1000
 
 SRCDIR=$HOME/HSCDynamics/
 DATADIR=$HOME/HSCDynamics/data/Nf$Nf
@@ -27,7 +27,7 @@ echo "starting julia script..."
 julia HPC/singleSimScript.jl ${SGE_TASK_ID} $Nf
 
 # rsync -rltv $TMPDIR/ $DATADIR/
-mv singlePatientFullSim_Nf*.jld2 $DATADIR/
+mv singlePatientFullSim_*.jld2 $DATADIR/
 
 echo "success"
 

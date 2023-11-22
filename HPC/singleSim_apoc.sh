@@ -1,6 +1,6 @@
 #!/bin/bash
 #$ -pe smp 1
-#$ -l h_vmem=8G
+#$ -l h_vmem=18G
 #$ -l h_rt=24:0:0
 #$ -wd ~/HSCDynamics
 #$ -j y
@@ -10,7 +10,7 @@
 
 module load julia
 
-Nf=5000
+Nf=1000
 
 SRCDIR=$HOME/HSCDynamics/
 DATADIR=$HOME/HSCDynamics/data/Nf$Nf
@@ -23,11 +23,11 @@ cd $TMPDIR
 
 echo "starting julia script..."
 
-# julia HPC/addPackages.jl
+julia HPC/addPackages.jl
 julia HPC/singleSimScript.jl 0 $Nf
 
 # rsync -rltv $TMPDIR/ $DATADIR/
-mv singlePatientFullSim_Nf*.jld2 $DATADIR/
+mv singlePatientFullSim_*.jld2 $DATADIR/
 
 echo "success"
 
