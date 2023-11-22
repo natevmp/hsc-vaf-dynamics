@@ -50,13 +50,8 @@ function evolveSCBurden(params::Dict, evolveTime::Number, tSaveStep::Number)
     tCounter = 1
     
     while t<evolveTime
-<<<<<<< HEAD:src/burdenSim.jl
-
-        if nLive < round(nTime(t))
-=======
         
         while nLive < round(nTime(t))
->>>>>>> nate:src/Vafdyn/burdenSim.jl
             # grow pop
             divCID = rand(1:nLive)
             push!(scBurden_cid, scBurden_cid[divCID])
