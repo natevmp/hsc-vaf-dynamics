@@ -73,9 +73,35 @@ for Nf in _Nf
 end
 
 ##
+
+_fNames = glob("data/Simulations/Nf10000/singlePatientFullSim_Ni1_*.jld2")
+paramsTrue, nVarSim_f, nVarSimS_f = load(_fNames[1], "paramsTrue", "nVarSim_f", "nVarSimS_f")
+lenF = length(nVarSim_f)
+n_sim_f = Array{Int,2}(undef, length(_fNames), lenF)
+for (i,fName) in enumerate(_fNames)
+    paramsTrue, nVarSim_f, nVarSimS_f = load(fName, "paramsTrue", "nVarSim_f", "nVarSimS_f")
+    n_sim_f[i,:] = nVarSim_f
+end
+nAv_f = vec(mean(n_sim_f,dims=1))
+nStd_f = vec(std(n_sim_f,dims=1))
+
+##
+# pyplot()
+# figscaler = 1
+# theme(:default, minorgrid=false, gridstyle=:dash, fontfamily="DejaVu Sans", size=(figscaler*600,figscaler*400))
 pyplot()
-figscaler = 1
-theme(:default, minorgrid=false, gridstyle=:dash, fontfamily="DejaVu Sans", size=(figscaler*600,figscaler*400))
+theme(:default,
+    # minorgrid=false,
+    gridstyle=:dash,
+    fontfamily="DejaVu Sans",
+    showaxis=true,
+    gridlinewidth=0.7,
+    # size=(0.9*500,0.9*400),
+    size=(500,400),
+    legendfontsize=10,
+    guidefontsize=12,
+    tickfontsize=10,
+)
 # histogram(nVaf1_Nf_Sim[5], bins=20)
 
 ##
@@ -170,3 +196,51 @@ xlims!(0, 11000)
 ylims!(0,.2)
 
 # figRelDisp = plot(figRelDispTotal, figRelDispSample, layout=(2,1), size=(figscaler*600,figscaler*500))
+
+##
+
+fig1 = plot(
+    range(0,1,length=lenF), nAv_f,
+    yscale=:log10, xscale=:log10,
+    label=L"V_f",
+)
+plot!(
+    range(0,1,length=lenF), nAv_f .+ nStd_f,
+    linestyle=:dash,
+    color=2,
+    alpha=0.6,
+    label=L"V_f \pm \sigma_f",
+)
+plot!(
+    range(0,1,length=lenF), nAv_f .- nStd_f,
+    linestyle=:dash,
+    color=2,
+    alpha=0.6,
+    label="",
+)
+xlims!(1/lenF,1E-1)
+ylims!(0.1, maximum(nAv_f))
+xlabel!(L"variant allele frequency  $f$")
+ylabel!("number of variants")
+display(fig1)
+
+##
+
+fig2 = plot(
+    # range(0,1,length=lenF), nAv_f,
+    yscale=:log10, xscale=:log10,
+    # label=L"V_f",
+)
+plot!(
+    range(0,1,length=lenF), nStd_f[nAv_f.!=0] ./ nAv_f[nAv_f.!=0],
+    color=:black,
+    alpha=0.8,
+    label=L"\sigma_f / V_f",
+)
+xlims!(1/lenF,1E-1)
+ylims!(1E-2, 1E2)
+xlabel!(L"variant allele frequency  $f$")
+# ylabel!(L"\sigma_{V_f}\, / V_f")
+ylabel!(L"relative standard deviation  $\sigma_{V_f}\, / V_f$")
+
+display(fig2)

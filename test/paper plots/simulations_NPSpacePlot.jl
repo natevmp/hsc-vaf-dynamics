@@ -17,7 +17,13 @@ end
 ## ====== Plot ======
 using Plots, LaTeXStrings, Colors, ColorSchemes
 pyplot()
-theme(:default, minorgrid=false, gridstyle=:dash, fontfamily="DejaVu Sans")
+theme(:default,
+    minorgrid=false, 
+    gridstyle=:dash, 
+    fontfamily="DejaVu Sans", 
+    legendfontsize=9, 
+    size=(500,400),
+)
 
 mygrays = ColorScheme(append!([RGB{Float64}(1, 1, 1),RGB{Float64}(1, 1, 1),RGB{Float64}(1, 1, 1),RGB{Float64}(1, 1, 1)],[RGB{Float64}(i, i, i) for i in 1:-0.01:0]))
 
@@ -25,7 +31,14 @@ colorgrad = cgrad(:grayC, rev = false, alpha = nothing, scale = nothing, categor
 # colorgrad = cgrad(mygrays, rev = false, alpha = nothing, scale = nothing, categorical = nothing)
 
 
-fig = contour(_p, _NDist[2:end], NOptDistribution_N_p, fill=true, c=colorgrad)
+fig = contour(
+    _p, _NDist[2:end], NOptDistribution_N_p,
+    fill=true,
+    c=colorgrad,
+    title = "d)",
+    titleloc = :left,
+    titlefont=font(20, "DejaVu Sans"),
+)
 scatter!(
     [paramsTrue["p"],], [paramsTrue["N final"],],
     markersize=8,
@@ -36,7 +49,5 @@ scatter!(
 xlabel!(L"Asymmetric divisions fraction $p$")
 ylabel!(L"Population size $N$")
 display(fig)
-
-##
-filename = "simulations_NPSpaceInference.pdf"
+filename = "3d.pdf"
 savefig(fig, "Figures/Paper/"*filename)

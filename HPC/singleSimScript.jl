@@ -7,6 +7,9 @@ using JLD2
 simNumber = parse(Int, ARGS[1])
 N = parse(Int, ARGS[2])
 
+# simNumber = 1
+# N = 150
+
 ## ===== User params =====
 paramsTrue = Dict{String,Real}(
     "N initial" => 1,
@@ -16,7 +19,8 @@ paramsTrue = Dict{String,Real}(
     "p" => 0.4,
     "sample size" => 100,
     "mature time" => 5,
-    "evolve time" => 60
+    "evolve time" => 60,
+    "pure births" => 100,
 )
 tSave = 0.1
 
@@ -45,7 +49,9 @@ filename = "singlePatientFullSim"*
     "_Ni"*string(paramsTrue["N initial"])*
     "_Nf"*string(paramsTrue["N final"])*
     "_tM"*string(paramsTrue["mature time"])*
+    "_NH"*string(paramsTrue["pure births"])*
     "_sim"*string(simNumber, pad=2)*
     ".jld2"
+
 @save filename paramsTrue timesSim_ nCellSim_t nVarSim_f nVarSimS_f nCellSim_m nCellSimS_m mSim_cid mSimS_cid
 

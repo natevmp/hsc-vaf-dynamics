@@ -1,7 +1,7 @@
 #!/bin/bash
 #$ -pe smp 1
 #$ -l h_vmem=18G
-#$ -l h_rt=1:0:0
+#$ -l h_rt=24:0:0
 #$ -wd ~/HSCDynamics
 #$ -j y
 #$ -N somaticMoranSimulation

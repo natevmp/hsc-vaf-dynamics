@@ -242,7 +242,7 @@ stephist!(mutRateS_sim,
         L"\sigma (\tilde{\mu}) = %$stdMutSample")
     
 xlabel!(L"\tilde{\mu}")
-ylabel!("fraction of simulations")
+ylabel!("Density of simulations")
 # title!("μ true = $μTrue, N mature = $NMature")
 display(plot3)
 
@@ -258,8 +258,9 @@ function getEffectiveDivisions(params)
     ϕ = params["ϕ"]
     Nf = params["N final"]
     Ni = params["N initial"]
-    λEff = ϕ*t + 2γ*tM + 2ρ*t - ρ*(1/Ni - 1/Nf)/γ - ρ*(t-tM)/Nf
-    λEff = (2ρ+ϕ)*t + (exp(-γ*tM)-1)*ρ/γ + 2*log(1+exp(γ*tM)) - log(4) + 2Nf*(t-tM)*γ/(Nf+1) - (t-tM)*ρ/Nf    # this only goes for Ni=1!
+    # λEff = ϕ*t + 2γ*tM + 2ρ*t - ρ*(1/Ni - 1/Nf)/γ - ρ*(t-tM)/Nf
+    # λEff = (2ρ+ϕ)*t + (exp(-γ*tM)-1)*ρ/γ + 2*log(1+exp(γ*tM)) - log(4) + 2Nf*(t-tM)*γ/(Nf+1) - (t-tM)*ρ/Nf    # this only goes for Ni=1!
+    λEff = (2ρ+ϕ)*t + (exp(-γ*tM)-1)*ρ/γ + 2*log(1+exp(γ*tM)) - log(4) - (t-tM)*ρ/Nf  
     return λEff
 end
 # getEffectiveDivisions(paramsTrue)*paramsTrue["μ"]
@@ -343,9 +344,9 @@ for (i, sim) in enumerate(sims)
 end
 
 xlims!(330,630)
-xlabel!("single cell burden")
-ylabel!("fraction of cells")
-title!("μ true = $μTrue, N mature = $NMature")
+xlabel!(L"Single cell mutational burden $m$")
+ylabel!("Density of cells")
+# title!("μ true = $μTrue, N mature = $NMature")
 display(plot4)
 
 

@@ -6,7 +6,7 @@
 #$ -j y
 #$ -N somaticMoranMultSimulations
 #$ -o ~/HSCDynamics
-#$ -t 1-100
+#$ -t 1-99
 
 module load julia
 
